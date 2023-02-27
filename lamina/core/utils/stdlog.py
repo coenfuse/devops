@@ -3,7 +3,7 @@
 
 
 # standard imports
-import logging
+import logging as __logger__
 
 # internal imports
 # ..
@@ -16,20 +16,37 @@ import logging
 
 
 
-def trace(msg):
-    logging.log(msg, level = 0)
+# docs
+# ------------------------------------------------------------------------------
+def trace(message: str) -> None:
+    __logger__.log(5, message)
 
-def debug(msg):
-    logging.log(msg, level = logging.DEBUG)
 
-def info(msg):
-    logging.log(msg, level = logging.INFO)
+# docs
+# ------------------------------------------------------------------------------
+def debug(message: str) -> None:
+    __logger__.debug(message)
 
-def warn(msg):
-    logging.log(msg, level = logging.WARN)
 
-def error(msg):
-    logging.log(msg, level = logging.ERROR)
+# docs
+# ------------------------------------------------------------------------------
+def info(message: str) -> None:
+    __logger__.info(message)
 
-def critical(msg):
-    logging.log(msg, level = logging.CRITICAL)
+
+# docs
+# ------------------------------------------------------------------------------
+def warn(message: str) -> None:
+    __logger__.warning(message)
+
+
+# docs
+# ------------------------------------------------------------------------------
+def error(message: str) -> None:
+    __logger__.error(message)
+
+
+# docs
+# ------------------------------------------------------------------------------
+def critical(message: str) -> None:
+    __logger__.critical(message)

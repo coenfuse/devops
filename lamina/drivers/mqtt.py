@@ -43,13 +43,21 @@ class Subscription:
 # ..
 class Agent:
     def __init__(self, client_id, clean_session, silent = True):                # TODO : add support for userdata and use in cb_on_connect
+        self.__NAME  = "MQTT_DVR"
         self.__agent = paho_client(client_id, clean_session)
         self.__is_silent = silent
         self.__id = client_id
 
-    def connect(self, host, port, keep_alive_s):
-        self.__agent.on_connect = self.__on_connect
+        self.__agent.on_connect = self.__cb_on_connect
+        self.__agent.on_disconnect = self.__cb_on_disconnect
+        self.__agent.on_subscribe = self.__cb_on_subscribe
+        self.__agent.on_unsubscribe = self.__cb_on_unsubscribe
+        self.__agent.on_publish = self.__cb_on_publish
 
+    # Add method for Agents to specify their own callbacks for mqtt events, instead
+    # of using default ones.
+
+    def connect(self, host, port, keep_alive_s):
         self.__agent.connect(host, port, keep_alive_s)
         self.__agent.loop_start()
         sleep(0.5)
@@ -65,10 +73,12 @@ class Agent:
     def subscribe(self, req: Subscription):
         self.__agent.subscribe(req.topic, req.qos)
         self.__agent.message_callback_add(req.topic, req.callback)
+        sleep(0.25)
 
-    def unsubscribe(self, info: Subscription):
-        self.__agent.unsubscribe(info.topic)
-        self.__agent.message_callback_remove(info.topic)
+    def unsubscribe(self, req: Subscription):
+        self.__agent.unsubscribe(req.topic)
+        self.__agent.message_callback_remove(req.topic)
+        sleep(0.25)
 
     def publish(self, msg: Message):
         if self.is_connected():
@@ -78,7 +88,7 @@ class Agent:
         if not self.__is_silent:
             stdlog.debug(f"{self.__NAME} : [{self.__id}] connected to broker with rc: {rc}")
 
-    def __cb_on_disconnect(self, client, userdata, flags, rc):
+    def __cb_on_disconnect(self, client, userdata, rc):
         if not self.__is_silent:
             msg = f"{self.__NAME} : [{self.__id}] disconnected from broker with rc: {rc}"
             stdlog.debug(msg) if rc == 0 else stdlog.error(msg)
