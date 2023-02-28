@@ -10,8 +10,9 @@ from typing import List
 from lamina.inputs import Base_Waiting_Agent
 
 # module imports
+from lamina.codecs import jsoncodec
 from lamina.core.utils import stdlog
-from lamina.drivers.mqtt import Agent, Subscription
+from lamina.drivers.mqtt import Agent, Subscription, Message
 from lamina.core.utils.error import ERC
 
 # thirdparty imports
@@ -105,7 +106,11 @@ class MQTT_Input_Agent:
     # This function will be called whenever a new message is received on MQTT by
     # the MQTT Agent
     def __generic_msg_collector(self, client_ref, userdata, message):
-        print(f"{self.__NAME} : recv message {message.payload}")
+        message = Message(message)
+        open_msg = jsoncodec.decode(message.payload)
+        # filt_msg = 
+        print(f"{self.__NAME} : recv message {open_msg}")
+
         # use the created filter to parse/sanitize the received message
         # then push the created data-block into the central data buffer using
         # the passed db reference

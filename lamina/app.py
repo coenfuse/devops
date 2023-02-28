@@ -45,7 +45,7 @@ class Configurator:
             "password" : "noobmaster69",
             "subscriptions" : [
                 {
-                    "topic" : "testing",
+                    "topic" : "lamina/recv",
                     "mid" : 12,
                     "qos" : 0
                 }
@@ -61,7 +61,7 @@ class Configurator:
             "keep_alive_s" : 60,
             "username" : "coenfuse",
             "password" : "noobmaster69",
-            "publish_to" : "banana",
+            "publish_to" : "lamina/send",
             "publish_rate_s" : 4,
             "reconnect_on_fail" : True,
             "reconnect_threshold" : 10
