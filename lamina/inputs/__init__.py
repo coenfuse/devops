@@ -10,7 +10,7 @@ from time import sleep
 # ..
 
 # module imports
-from lamina.core.utils.codes import ERC
+from lamina.core.utils.error import ERC
 
 # thirdparty imports
 # ..

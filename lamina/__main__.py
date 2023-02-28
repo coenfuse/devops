@@ -11,7 +11,7 @@ import lamina.metadata as meta
 
 # module imports
 from lamina.core.utils import stdlog
-from lamina.core.utils.codes import ERC
+from lamina.core.utils.error import ERC
 
 # thirdparty imports
 # ..

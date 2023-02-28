@@ -15,7 +15,7 @@ import lamina.metadata as meta
 # module imports
 from lamina.core.streams.stream import Stream
 from lamina.core.utils import stdlog
-from lamina.core.utils.codes import ERC
+from lamina.core.utils.error import ERC
 
 # thirdparty imports
 # ..
@@ -36,7 +36,7 @@ class Configurator:
 
     def get_input_mqtt(self) -> dict:
         return {
-            "client_id" : "lamina",
+            "client_id" : "lamina_recv",
             "is_clean_session" : True,
             "host" : "localhost",
             "port" : 1883,
@@ -50,6 +50,21 @@ class Configurator:
                     "qos" : 0
                 }
             ]
+        }
+
+    def get_output_mqtt(self) -> dict:
+        return {
+            "client_id" : "lamina_send",
+            "is_clean_session" : True,
+            "host" : "localhost",
+            "port" : 1883,
+            "keep_alive_s" : 60,
+            "username" : "coenfuse",
+            "password" : "noobmaster69",
+            "publish_to" : "banana",
+            "publish_rate_s" : 4,
+            "reconnect_on_fail" : True,
+            "reconnect_threshold" : 10
         }
 
 

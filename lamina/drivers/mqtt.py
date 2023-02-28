@@ -40,7 +40,8 @@ class Subscription:
     callback = None
 
 
-# ..
+# ,,
+# TODO : Rename Agent to Client
 class Agent:
     def __init__(self, client_id, clean_session, silent = True):                # TODO : add support for userdata and use in cb_on_connect
         self.__NAME  = "MQTT_DVR"
@@ -82,7 +83,7 @@ class Agent:
 
     def publish(self, msg: Message):
         if self.is_connected():
-            return self.__agent.publish(msg.topic, msg.payload, msg.qos, msg.to_retain)
+            self.__agent.publish(msg.topic, msg.payload, msg.qos, msg.retain)
 
     def __cb_on_connect(self, client_obj, userdata, flags, rc):
         if not self.__is_silent:

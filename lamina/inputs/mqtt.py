@@ -12,7 +12,7 @@ from lamina.inputs import Base_Waiting_Agent
 # module imports
 from lamina.core.utils import stdlog
 from lamina.drivers.mqtt import Agent, Subscription
-from lamina.core.utils.codes import ERC
+from lamina.core.utils.error import ERC
 
 # thirdparty imports
 # ..
@@ -36,7 +36,7 @@ class Configuration:
 
             # process all the other nested blocks here as well, e.g. subscriptions
         except Exception as e:
-            stdlog.critical(f"config parse FAILURE with exception: {e}")
+            stdlog.error(f"config parse FAILURE with exception: {e}")
 
     def get_client_id(self) -> str:
         return self.__config["client_id"]
@@ -66,6 +66,7 @@ class Configuration:
 
 class MQTT_Input_Agent:
     def __init__(self, config: Configuration, db_ref):
+        self.__NAME   = "MQTTSRV_I"
         self.__config = config
         self.__db_ref = db_ref
         self.__filter = None            # create a filter with the passed config
@@ -104,7 +105,10 @@ class MQTT_Input_Agent:
     # This function will be called whenever a new message is received on MQTT by
     # the MQTT Agent
     def __generic_msg_collector(self, client_ref, userdata, message):
-        print(f"recv new message {message.payload}")
+        print(f"{self.__NAME} : recv message {message.payload}")
         # use the created filter to parse/sanitize the received message
         # then push the created data-block into the central data buffer using
         # the passed db reference
+
+    # TODO : Add a reconnector that ensures consistent connection. More like an 
+    # internal watchdog but a lazy one. Since it requires a whip to activate.
