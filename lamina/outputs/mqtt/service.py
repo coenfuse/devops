@@ -34,6 +34,8 @@ class MQTT_Output_Service:
         self.__buffer = MemBuff()
         self.__buffer.make_buffer("inbox")
         self.__buffer.make_buffer("failed")
+
+        self.__queue = Queue()
         
         self.__publisher = Thread(target = self.__publish_job)
         self.__is_requested_stop = True
@@ -74,8 +76,8 @@ class MQTT_Output_Service:
     # or whenever the connection resumes.
     def request_send(self, message):
         # TODO : encode the message using appropriate encoder
-        self.__buffer.push("basic", message)
-
+        # self.__buffer.push("basic", message)
+        self.__queue.put(message)
 
     # TODO : Implement the reconnector, this ensures the client is cleared, and
     # restarted cleanly. This must happen only if approval is given via application
@@ -88,8 +90,10 @@ class MQTT_Output_Service:
     # buffer (file maybe?)
     def __publish_job(self):
         while not self.__is_requested_stop:
-            message = self.__buffer.pop("basic")
+            # message = self.__buffer.pop("basic")
+            message = self.__queue.get()
+            message.topic = "lamina/send"
             if message is not None:
                 self.__client.publish(message)
-                stdlog.debug(f"{self.__NAME} : sent message")
+                stdlog.debug(f"{self.__NAME} : sent message {message}")
                 sleep(self.__config.get_publish_rate_s())

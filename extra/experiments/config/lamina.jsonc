@@ -1,5 +1,8 @@
-{
+// THIS CONFIG IS NEARLY PERFECT, BUT NEEDS SOME FIXES AND UPDATES ACCORDING TO
+// ROADMAP & lamina.config.jsonc
 
+
+{
     // Global configs
     "agent_name" : "",
     

@@ -29,11 +29,12 @@ class MemBuff:
 
     def push(self, buffer: str, value: any):
         if buffer in self.__state:
-            Queue(self.__state[buffer]).put(
-                item = value, block = True, timeout = None)
+            print(f"trying to push {value} in buffer {buffer}")
+            Queue(self.__state[buffer]).put_nowait(item = value)
+                # item = value, block = True, timeout = None)
 
-    def pop(self, buffer: str):
+    def pop(self, buffer: str, block_thread = True, timeout_s = None):
         if buffer in self.__state:
-            Queue(self.__state[buffer]).get(block = True, timeout = None)
+            Queue(self.__state[buffer]).get(block_thread, timeout_s)
 
     

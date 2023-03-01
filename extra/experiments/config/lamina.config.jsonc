@@ -1,0 +1,104 @@
+{
+    "inputs" : {
+        "ina" : {
+
+            // specify the type of input connection, this will help the service
+            // decide what type of driver to use. Can be mqtt, http, can or etc
+            "type" : "mqtt",
+
+            // specify connection details for the input agent, internally the
+            // output service will deduce its own endpoint's configuration parsing
+            // depending on the 'type' of outbound service is set
+            "endpoint" : {
+                "id" : "lamina_in",
+                "host" : "localhost",
+                "port" : 1883,
+                "username" : "",
+                "password" : "",
+                "clean_connection" : true,
+                "connection_timeout_s" : 60
+            },
+
+            // waiting can be 'null' to disable any waiting and instead (waiting
+            // would be useful for polling services, not subscribing)
+            "waiting" : null,
+
+            // contains all the receiving info, this configuration will again
+            // be parsed depending on the type of input service this is.
+            "fetch" : {     
+                "topic" : "lamina/mqtt/out/test",
+                "qos" : 0,
+                "mid" : 0
+            }
+        }
+    },
+
+    "filters" : {
+        "filter_a" : {
+
+        }
+    },
+
+    "processor" : {
+
+    },
+
+    "outputs" : {
+        "outa" : {
+
+            // specify the type of output connection, this will customize the
+            // connection driver that'll be used for this service. Can be mqtt,
+            // http, can, influx or whatever.
+            "type" : "mqtt",
+
+            // specify connection details for the output agent, internally the
+            // output service will deduce its own endpoint's parsing depending
+            // on the 'type' of outbound service is set
+            "endpoint" : {
+                "id" : "lamina_out",
+                "host" : "localhost",
+                "port" : 1883,
+                "username" : "",
+                "password" : "",
+                "clean_connection" : true,
+                "connection_timeout_s" : 60
+            },
+
+            // buffering could be 'null' to disable any memory buffering
+            "buffering" : {
+                "max_size" : 100000,                         // -1 = infinite
+                
+                // whether to safe buffer to a file. If null, will be saved in
+                // memory (might be unsafe for critical applications)
+                "file" : {
+                    "path" : "",
+                    "encryption_key" : "",
+                    "rotate_on_overflow" : true,
+                    "retain_when_used" : false          // whether to keep file after sending its contents to endpoint, might be helpful in debugging 
+                },
+                
+                "purge_rate_s" : "inherit"                // inherit means it will be send in the same output rate as service is configured, else any positive numerical amount depicting seconds interval
+            },
+
+            // contains all the sending info, this configuration will again
+            // be parsed depending on the type of input service this is.
+            "publish" : {
+                "encoding" : "json-str",
+                
+                "topic" : "lamina/mqtt/out/test",
+                "qos" : 0,
+                "retain" : false,
+                
+                "rate_s" : 5        // sends message every 5 seconds, if 0, will be sent instantly.
+            }
+
+        }
+    },
+
+    
+    // stream
+    "stream" : {
+        "input" : "",
+        "output" : ""
+    }
+}

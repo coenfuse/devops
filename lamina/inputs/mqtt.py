@@ -66,12 +66,12 @@ class Configuration:
 
 
 class MQTT_Input_Agent:
-    def __init__(self, config: Configuration, db_ref):
+    def __init__(self, config: Configuration, on_recv_cb):
         self.__NAME   = "MQTTSRV_I"
         self.__config = config
-        self.__db_ref = db_ref
         self.__filter = None            # create a filter with the passed config
         self.__client: Agent = None
+        self.__on_recv_cb = on_recv_cb
 
     def start(self) -> ERC:
         status = ERC.SUCCESS
@@ -107,13 +107,14 @@ class MQTT_Input_Agent:
     # the MQTT Agent
     def __generic_msg_collector(self, client_ref, userdata, message):
         message = Message(message)
-        open_msg = jsoncodec.decode(message.payload)
+        # open_msg = jsoncodec.decode(message.payload)
         # filt_msg = 
-        print(f"{self.__NAME} : recv message {open_msg}")
+        print(f"{self.__NAME} : recv message {message.payload}")
+        self.__on_recv_cb(message)
 
         # use the created filter to parse/sanitize the received message
-        # then push the created data-block into the central data buffer using
-        # the passed db reference
+        # then send the data-block to specified callback where something happens
+        # to that data object.
 
     # TODO : Add a reconnector that ensures consistent connection. More like an 
     # internal watchdog but a lazy one. Since it requires a whip to activate.

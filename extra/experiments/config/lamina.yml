@@ -32,6 +32,16 @@ inputs:
       content_type: csv
 
 
+combiner:
+  tag: "forensic"           # a combination tag can a be a constant string or a key from the open dictionary format that lamina uses internally
+  timeout_s: 12 
+  inputs:
+    - channel_1:
+      input: lameboi
+    - channel_2:
+      input: saneboi
+
+
 filters:
   - json_filter_1:
       content_type: json
@@ -44,17 +54,18 @@ filters:
     json_filter_2:
       content_type: json
       keys:
-        - name
-        - address
-        - 'case : 3'
+        - name            # name object
+        - address         # address object
+        - case - 3        # third item from the array  
+        - phone > home    # home key from the phone object
     
     csv_filter_1:
       content_type: csv
       keys:
-        - 0
-        - 1
-        - 2
-        - 3
+        - 0               # column 0
+        - 1               # ~ 1
+        - 2               # ~ 2
+        - 3               # ...
         - 6
         - 9
 
