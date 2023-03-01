@@ -1,0 +1,59 @@
+[input]
+channel.type = "http"
+
+http.target   = ""
+http.reqbody  = ""
+http.token    = ""
+http.reqrate  = "1s"         # ns, us, ms, s, & m
+
+content.type  = "json"
+content.keys = ["measurement", "field1", "field2", "field3"]
+
+[processor]
+# ..
+
+[output]
+channel.type = "influxdb"
+influxdb.target   = ""
+influxdb.token    = ""
+influxdb.username = ""
+influxdb.password = ""
+influxdb.bucket   = ""
+
+
+# now that I think of it, this won't be any different than telegraf, if I had
+# input, process and output components. Originally, mflux was planned to have
+# a concurrent pipeline system where on can configure the input and output ports
+# of a pipeline. But this has one massive caveat though.
+
+# This pipeline process is multi-threaded instead of multi-processing. All the
+# concurrent pipelines will be working on a single process that has high
+# succeptibility of choking the hardware, given one thread costs much bandwidth.
+
+# this also adds strain to the codebase complexity as we then are required to
+# manage multithreading. This complexity on overhead might or might not be helpful
+# to the user.
+
+# In python, we could've mitigated this issue with multiprocessing library but
+# that too will only work if the user happens to have a multiprocessing hardware.
+
+# The best approach would be is to maintain only one high performing pipeline
+# in one instance of Mflux. If user wishes to have multiple pipelines then they
+# must run multiple serparately configured instances of Mflux on their systems
+# as per the requirement available.
+
+# The only caveat to this would be that we won't be able to have a simple multi-
+# input or multi-output pipeline. As of now I am unable to see any use cases
+# for multi-input usage, however, I do acknowledge grave requirement multi-output
+# pipelines.
+
+[pipeline]
+name = ""
+
+inflow.plugin = []
+inflow.rate = []
+
+compute.module = ""                 # name of the processor logic
+
+outflow.plugin = []
+outflow.rate = 0                    # 0 for continous flow, any non-zero value will result in iterative outflow at every given interval with automatic buffering

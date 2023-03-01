@@ -1,5 +1,0 @@
-1. Python venv on Linux
-Create a venv by typing python3 -m venv venv
-Then activate it by source ./venv/bin/activate
-Do not ask me why source is required, it is just required and it work.
-More info @ https://stackoverflow.com/questions/14604699/how-to-activate-virtualenv-in-linux
