@@ -109,7 +109,7 @@ class MQTT_Input_Agent:
         message = Message(message)
         # open_msg = jsoncodec.decode(message.payload)
         # filt_msg = 
-        print(f"{self.__NAME} : recv message {message.payload}")
+        stdlog.debug(f"{self.__NAME} : recv message {message.payload}")
         self.__on_recv_cb(message)
 
         # use the created filter to parse/sanitize the received message

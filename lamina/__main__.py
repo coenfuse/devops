@@ -4,6 +4,7 @@
 
 # standard imports
 import signal
+import sys
 
 # internal imports
 from lamina.app import Lamina
@@ -46,3 +47,4 @@ if __name__ == "__main__":
     
     finally:
         print(f"\n{meta.NAME} exited with code {status.value} [{status.name}]")
+        quit(status.value)

@@ -63,7 +63,7 @@ class Stream:
         self.__is_requested_stop = True
         self.__input.stop()
         self.__output.stop()
-        self.__relay_service.join(timout = 5)
+        self.__relay_service.join(timeout = 5)
         return ERC.SUCCESS
 
     def is_running(self):
