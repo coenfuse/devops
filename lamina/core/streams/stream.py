@@ -13,7 +13,7 @@ from time import sleep
 
 # module imports
 from lamina.core.utils.error import ERC
-from lamina.core.buffers.membuff import MemBuff
+from lamina.core.buffers.membuff import MemQueue
 from lamina.inputs.mqtt import MQTT_Input_Agent, Configuration
 from lamina.outputs.mqtt import MQTT_Output_Service
 
@@ -24,7 +24,7 @@ from lamina.outputs.mqtt import MQTT_Output_Service
 
 class Stream:
     def __init__(self):
-        self.__buffer_mq: MemBuff = None
+        self.__buffer_mq: MemQueue = None
         self.__input = None
         self.__output = None
 
@@ -37,16 +37,14 @@ class Stream:
 
 
     def configure(self, config) -> ERC:
-        self.__buffer_mq = MemBuff()
-        self.__buffer_mq.make_buffer("inbox")
-
-        self.__buffer = Queue()
+        self.__buffer_mq = MemQueue()
+        self.__buffer_mq.add_queue("inbox")
 
         self.__output = MQTT_Output_Service(json.dumps(config.get_output_mqtt()))
         
         self.__input = MQTT_Input_Agent(
             config = Configuration(json.dumps(config.get_input_mqtt())), 
-            on_recv_cb = lambda data : self.__buffer.put(data))
+            on_recv_cb = lambda data : self.__buffer_mq.push("inbox", data))
         
         return ERC.SUCCESS
 
@@ -71,7 +69,6 @@ class Stream:
 
     def __relayer(self):
         while not self.__is_requested_stop:
-            item = self.__buffer.get()
-            # item = self.__buffer_mq.pop("inbox")
+            item = self.__buffer_mq.pop("inbox")
             if item is not None:
                 self.__output.request_send(item)

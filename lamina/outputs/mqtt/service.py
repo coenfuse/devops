@@ -15,7 +15,7 @@ from time import sleep
 from lamina.outputs.mqtt.config import Configuration
 
 # module imports
-from lamina.core.buffers.membuff import MemBuff
+from lamina.core.buffers.membuff import MemQueue
 from lamina.core.utils import stdlog
 from lamina.drivers.mqtt import Agent as Client
 from lamina.core.utils.error import ERC
@@ -31,11 +31,8 @@ class MQTT_Output_Service:
         self.__config = Configuration(raw_config)
         self.__client: Client = None
         
-        self.__buffer = MemBuff()
-        self.__buffer.make_buffer("inbox")
-        self.__buffer.make_buffer("failed")
-
-        self.__queue = Queue()
+        self.__buffer = MemQueue()
+        self.__buffer.add_queue("inbox")
         
         self.__publisher = Thread(target = self.__publish_job)
         self.__is_requested_stop = True
@@ -76,8 +73,7 @@ class MQTT_Output_Service:
     # or whenever the connection resumes.
     def request_send(self, message):
         # TODO : encode the message using appropriate encoder
-        # self.__buffer.push("basic", message)
-        self.__queue.put(message)
+        self.__buffer.push("inbox", message)
 
     # TODO : Implement the reconnector, this ensures the client is cleared, and
     # restarted cleanly. This must happen only if approval is given via application
@@ -90,10 +86,14 @@ class MQTT_Output_Service:
     # buffer (file maybe?)
     def __publish_job(self):
         while not self.__is_requested_stop:
-            # message = self.__buffer.pop("basic")
-            message = self.__queue.get()
-            message.topic = "lamina/send"
+            message = self.__buffer.peek("inbox")       # blocking
             if message is not None:
+                message.topic = "lamina/send"
+                
+                stdlog.debug(f"{self.__NAME} : sending message {message.payload}")
                 self.__client.publish(message)
-                stdlog.debug(f"{self.__NAME} : sent message {message}")
+
+                # if publish is successful
+                self.__buffer.pop("inbox")
+
                 sleep(self.__config.get_publish_rate_s())
