@@ -40,7 +40,7 @@ class Configuration:
     def get_password(self) -> str:
         return self.__config["password"]
 
-    def get_publish_topic(self) -> dict:
+    def get_publish_topic(self) -> str:
         return self.__config["publish_to"]
 
     def get_publish_rate_s(self) -> int:

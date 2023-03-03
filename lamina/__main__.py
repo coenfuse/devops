@@ -47,4 +47,4 @@ if __name__ == "__main__":
     
     finally:
         print(f"\n{meta.NAME} exited with code {status.value} [{status.name}]")
-        quit(status.value)
+        sys.exit(status.value)

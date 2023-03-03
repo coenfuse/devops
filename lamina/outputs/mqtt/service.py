@@ -18,6 +18,7 @@ from lamina.outputs.mqtt.config import Configuration
 from lamina.core.buffers.membuff import MemQueue
 from lamina.core.utils import stdlog
 from lamina.drivers.mqtt import Agent as Client
+from lamina.drivers.mqtt import Message
 from lamina.core.utils.error import ERC
 
 # thirdparty imports
@@ -34,7 +35,7 @@ class MQTT_Output_Service:
         self.__buffer = MemQueue()
         self.__buffer.add_queue("inbox")
         
-        self.__publisher = Thread(target = self.__publish_job)
+        self.__publisher = Thread(target = self.__publish_job, name = "output_publisher")
         self.__is_requested_stop = True
 
 
@@ -59,7 +60,7 @@ class MQTT_Output_Service:
     def stop(self):
         status = ERC.SUCCESS
         self.__is_requested_stop = True
-        self.__publisher.join(timeout = 5)
+        self.__publisher.join()
         self.__client.disconnect()
         self.__client = None
 
@@ -82,18 +83,33 @@ class MQTT_Output_Service:
         pass
 
 
-    # TODO : Add facility for supporting failed messages, that are saved in separate
-    # buffer (file maybe?)
+    # TODO : Add facility for supporting failed messages, that are saved in 
+    # separate buffer (file maybe?)
+
+    # Publishes queued messages to a broker using a client at a configured topic. 
+    # It waits for outbound messages of type Message in an internal buffer queue,
+    # sends a copy to the broker, pops the original message from the queue after
+    # a successful publish, and waits for a specified amount of time (determined
+    # by the publish rate parameter) before repeating the process.
     def __publish_job(self):
         while not self.__is_requested_stop:
-            message = self.__buffer.peek("inbox")       # blocking
-            if message is not None:
-                message.topic = "lamina/send"
-                
-                stdlog.debug(f"{self.__NAME} : sending message {message.payload}")
-                self.__client.publish(message)
+            try: 
+                message = self.__buffer.peek("inbox", timeout_s = 2)
+                if isinstance(message, Message):
+                    message.topic = self.__config.get_publish_topic()           # must be assigned by processor, may be removed later        
+                    if self.__client.publish(message) == 0:
+                        self.__buffer.pop("inbox")
+                        sleep(self.__config.get_publish_rate_s())
 
-                # if publish is successful
-                self.__buffer.pop("inbox")
+            # when the queue doesn't exist
+            except KeyError as e:
+                stdlog.critical(f"{self.__NAME} : buffer queue does not exist")
+            
+            # Index error will only be raised when the queue is empty
+            # No logging required, will be raised after every timeout_s expiration
+            except IndexError as e:
+                pass
 
-                sleep(self.__config.get_publish_rate_s())
+            # any other exception
+            except Exception as e:
+                stdlog.error(f"{self.__NAME} : {e}")

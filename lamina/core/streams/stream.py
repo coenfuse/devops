@@ -32,7 +32,7 @@ class Stream:
         # self.__processor = None
         # self.__router = None
 
-        self.__relay_service = Thread(target = self.__relayer)
+        self.__relay_service = Thread(target = self.__relayer, name = "input_stream_handler")
         self.__is_requested_stop = True
 
 
@@ -69,6 +69,9 @@ class Stream:
 
     def __relayer(self):
         while not self.__is_requested_stop:
-            item = self.__buffer_mq.pop("inbox")
-            if item is not None:
-                self.__output.request_send(item)
+            try:
+                item = self.__buffer_mq.pop("inbox", timeout_s = 2)
+                if item is not None:
+                    self.__output.request_send(item)
+            except:
+                pass
