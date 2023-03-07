@@ -11,7 +11,7 @@
             "module": "lamina",
             "justMyCode": true,
             "args": [
-                "--config", "${workspaceFolder}/config/lamina.config.json5",
+                "--config", "${workspaceFolder}/config/lamina.toml",
                 "--stdout"
              ]
         }

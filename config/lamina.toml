@@ -1,0 +1,79 @@
+# documentation
+[lamina]
+    instance = "lamina_test"
+    log.fileout.level = 0
+    log.fileout.directory = ''
+
+
+# documentation
+[inputs]
+
+    # documentation
+    [inputs.mqtt.rambo]
+        host.ip = "localhost"
+        host.port = 1883
+        auth.username = ""
+        auth.password = ""
+        session.clean = true
+        session.timeout_s = 10
+
+        [[inputs.mqtt.rambo.subs]]
+            topic = "lamina/recva"
+            qos = 0
+            mid = 23
+            retain = true
+            tag = "pumbo"
+
+        [[inputs.mqtt.rambo.subs]]
+            topic = "lamina/recvb"
+            qos = 0
+            mid = 45
+            retain = true
+            tag = "jumbo"
+
+        [[inputs.mqtt.rambo.subs]]
+            topic = "lamina/recvc"
+            qos = 0
+            mid = 21
+            retain = true
+            tag = "jumbo"
+
+
+# documentation
+[outputs]
+
+    # documentation
+    [outputs.mqtt.bambo]
+        host.ip = "localhost"
+        host.port = 1883
+        auth.username = ""
+        auth.password = ""
+        session.clean = true
+        session.timeout_s = 10
+
+        [[outputs.mqtt.bambo.pubs]]
+            topic = "lamina/senda"
+            qos = 0
+            mid = "auto"
+            retain = true
+            publish.rate_s = 1
+            publish.variance = 4
+            publish.timeout = 5
+            tag = "jumbo"
+
+        [[outputs.mqtt.bambo.pubs]]
+            topic = "lamina/sendb"
+            qos = 0
+            mid = 21
+            retain = false
+            publish.rate_s = 3
+            publish.variance = 0
+            publish.timeout = 7
+            tag = "pumbo"
+
+
+# documentation
+[stream]
+    [stream.basic]
+        inputs = ["mqtt.rambo"]
+        outputs = ["mqtt.bambo"]
