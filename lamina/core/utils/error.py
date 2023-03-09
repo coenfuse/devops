@@ -3,7 +3,7 @@
 
 
 # standard imports
-from enum import Enum
+from enum import Enum as __stdenum
 
 # internal imports
 # ..
@@ -16,7 +16,7 @@ from enum import Enum
 
 
 
-class ERC(Enum):
+class ERC(__stdenum):
 
     # General errors
     SUCCESS = 0

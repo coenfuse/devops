@@ -12,42 +12,38 @@ import json5
 
 
 class Configuration:
-    def __init__(self, raw_config):
-        self.__config: dict = {}
-        try:
-            self.__config: dict = json5.loads(raw_config)
-        except Exception as e:
-            stdlog.error(f"config parse FAILURE with exception: {e}")
+    def __init__(self, config: dict):
+        self.__config: dict = config
 
     def get_client_id(self) -> str:
-        return self.__config["client_id"]
-
-    def get_is_clean_session(self) -> bool:
-        return self.__config["is_clean_session"]
+        return "banana"
 
     def get_host(self) -> str:
-        return self.__config["host"]
+        return self.__config["host"]["ip"]
 
     def get_port(self) -> int:
-        return self.__config["port"]
-
-    def get_keep_alive_s(self) -> int:
-        return self.__config["keep_alive_s"]
+        return self.__config["host"]["port"]
 
     def get_username(self) -> str:
-        return self.__config["username"]
+        return self.__config["auth"]["username"]
 
     def get_password(self) -> str:
-        return self.__config["password"]
+        return self.__config["auth"]["password"]
 
-    def get_publish_topic(self) -> str:
-        return self.__config["publish_to"]
-
-    def get_publish_rate_s(self) -> int:
-        return self.__config["publish_rate_s"]
+    def get_is_clean_session(self) -> bool:
+        return self.__config["session"]["clean"]
+    
+    def get_keep_alive_s(self) -> int:
+        return self.__config["session"]["timeout_s"]
 
     def get_to_reconnect(self) -> bool:
-        return self.__config["reconnect_on_fail"]
+        return self.__config["session"]["reconnect_on_fail"]
+    
+    def get_reconnect_fail_count(self) -> bool:
+        return self.__config["session"]["reconnect_timeout_s"]
 
-    def get_reconnect_fail_count(self) -> int:
-        return self.__config["reconnect_threshold"]
+    def get_publish_topic(self) -> str:
+        return self.__config["pubs"][0]["topic"]
+
+    def get_publish_rate_s(self) -> int:
+        return self.__config["pubs"][0]["rate_s"]

@@ -3,7 +3,6 @@
 
 
 # standard imports
-import json
 from typing import List
 
 # internal imports
@@ -20,48 +19,46 @@ from lamina.core.utils.error import ERC
 
 
 class Configuration:
-    def __init__(self, raw_config):
-        self.__config: dict = {}
+    def __init__(self, config):
+        self.__config: dict = config
         try:
-            self.__config: dict = json.loads(raw_config)
-            raw_subs = self.__config.get("subscriptions")
-            subs = []
-            for sub in raw_subs:
+            subs = self.__config.get("subs")
+            subscriptions = []
+            for sub in subs:
                 sub_obj = Subscription()
                 sub_obj.mid = sub["mid"]
                 sub_obj.qos = sub["qos"]
                 sub_obj.topic = sub["topic"]
-                subs.append(sub_obj)
+                subscriptions.append(sub_obj)
 
-            self.__config["subscriptions"] = subs
+            self.__config["subs"] = subscriptions
 
-            # process all the other nested blocks here as well, e.g. subscriptions
         except Exception as e:
             stdlog.error(f"config parse FAILURE with exception: {e}")
 
     def get_client_id(self) -> str:
-        return self.__config["client_id"]
+        return "tuco"
 
     def get_is_clean_session(self) -> bool:
-        return self.__config["is_clean_session"]
+        return self.__config["session"]["clean"]
 
     def get_host(self) -> str:
-        return self.__config["host"]
+        return self.__config["host"]["ip"]
 
     def get_port(self) -> int:
-        return self.__config["port"]
+        return self.__config["host"]["port"]
 
     def get_keep_alive_s(self) -> int:
-        return self.__config["keep_alive_s"]
+        return self.__config["session"]["timeout_s"]
 
     def get_username(self) -> str:
-        return self.__config["username"]
+        return self.__config["auth"]["username"]
 
     def get_password(self) -> str:
-        return self.__config["password"]
+        return self.__config["auth"]["password"]
 
     def get_subscriptions(self) -> List[Subscription]:
-        return self.__config["subscriptions"]
+        return self.__config["subs"]
 
 
 

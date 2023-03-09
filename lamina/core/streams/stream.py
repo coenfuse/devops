@@ -12,6 +12,7 @@ from time import sleep
 # ..
 
 # module imports
+from lamina.core.configurators.basic import Configurator
 from lamina.core.utils.error import ERC
 from lamina.core.buffers.membuff import MemQueue
 from lamina.inputs.mqtt import MQTT_Input_Agent, Configuration
@@ -36,14 +37,14 @@ class Stream:
         self.__is_requested_stop = True
 
 
-    def configure(self, config) -> ERC:
+    def configure(self, config: Configurator) -> ERC:
         self.__buffer_mq = MemQueue()
         self.__buffer_mq.add_queue("inbox")
 
-        self.__output = MQTT_Output_Service(json.dumps(config.get_output_mqtt()))
+        self.__output = MQTT_Output_Service(config.get_that_output_config('mqtt', 'bambo'))
         
         self.__input = MQTT_Input_Agent(
-            config = Configuration(json.dumps(config.get_input_mqtt())), 
+            config = Configuration(config.get_that_input_config('mqtt', 'rambo')), 
             on_recv_cb = lambda data : self.__buffer_mq.push("inbox", data))
         
         return ERC.SUCCESS

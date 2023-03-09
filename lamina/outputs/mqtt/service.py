@@ -27,9 +27,9 @@ import json5
 
 # ------------------------------------------------------------------------------
 class MQTT_Output_Service:
-    def __init__(self, raw_config: str):
+    def __init__(self, config: dict):
         self.__NAME   = "MQTTSRV_O"
-        self.__config = Configuration(raw_config)
+        self.__config = Configuration(config)
         self.__client: Client = None
         
         self.__buffer = MemQueue()
