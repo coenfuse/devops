@@ -21,7 +21,7 @@ from lamina.core.utils.error import ERC
 
 # signal handlers
 def sigint_handler(app_ref: Lamina):
-    stdlog.info(f"received interrupt SIGINT [{signal.SIGINT}]")
+    stdlog.debug(f"received interrupt SIGINT [{signal.SIGINT}]")
     app_ref.stop()
 
 # ------------------------------------------------------------------------------

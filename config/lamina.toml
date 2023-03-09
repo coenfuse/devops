@@ -1,12 +1,9 @@
 # documentation
 [lamina]
     instance = "CS31"
-    log.std.enabled = true
-    log.std.level = 1
-
-    log.file.enabled = true
-    log.file.level = 0
-    log.file.path = 'out/log'
+    log.stdout.level = 1
+    log.fileout.level = 0
+    log.fileout.path = 'out/log'
 
 
 # documentation

@@ -103,25 +103,42 @@ class Lamina:
         return status
 
 
-    # TODO : docs, add a way to have different logging controllers for stdlog
-    # and filelog
+    # NOTE : Keeping both styles of logging level assignment as the if-else
+    # pattern is not scalable as the match one. If we were required to add a
+    # level below DEBUG. It won't be possible with level * 10
     # --------------------------------------------------------------------------
-
     def __setup_logging(self) -> ERC:
         status = ERC.SUCCESS
 
-        stdlog_config = self.__config.get_app_config()["log"]["std"]
-        filelog_config= self.__config.get_app_config()["log"]["file"]
+        # setup basics and fetch config
+        config = self.__config.get_app_config().get("log")
+        log_fmt = logging.Formatter(
+            datefmt = "%Y-%m-%d %H:%M:%S",
+            fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : %(message)s")
         
-        log_handles = []
-        log_format  = '%(asctime)s.%(msecs)03d [%(levelname).1s] : %(message)s'
-        log_datefmt = '%Y-%m-%d %H:%M:%S'
-        
-        if stdlog_config["enabled"]:
-            log_handles.append(logging.StreamHandler(sys.stdout))
+        # setup root logger and add custom level
+        logging.addLevelName(5, "DEBUG")
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.NOTSET)
+         
+        # setup console logger (if req.)
+        if "stdout" in config:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(log_fmt)
+            
+            level = config["stdout"]["level"]
+            if level in [0,1,2,3,4,5]:
+                console_handler.setLevel(level * 10)        # log levels are in multiples of 10
+            else:
+                print(f"{self.__CNAME} : INVALID stdout.level = {level}. Defaulting to INFO")
+                console_handler.setLevel(logging.INFO)
 
-        if filelog_config["enabled"]:
-            logdir = os.path.abspath(filelog_config["path"])
+            root_logger.addHandler(console_handler)
+
+        # setup file logger (if req.)
+        if "fileout" in config:
+            logdir = os.path.abspath(config["fileout"]["path"])
+            loglvl = config["fileout"]["level"]
 
             if not os.path.exists(logdir):
                 try: os.makedirs(logdir)
@@ -129,24 +146,20 @@ class Lamina:
                     print(f"{self.__CNAME} : log directory create failure at - {logdir} with error: {e}")
                     status = ERC.EXCEPTION
 
-            log_handles.append(logging.FileHandler(f'{logdir}/{meta.NAME.lower()}.log'))
+            file_handler = logging.FileHandler(f'{logdir}/{meta.NAME.lower()}.log')
+            file_handler.setFormatter(log_fmt)
+            match loglvl:
+                case 0: file_handler.setLevel(5)    # TRACE
+                case 1: file_handler.setLevel(logging.DEBUG)
+                case 2: file_handler.setLevel(logging.INFO)
+                case 3: file_handler.setLevel(logging.WARN)
+                case 4: file_handler.setLevel(logging.ERROR)
+                case 5: file_handler.setLevel(logging.CRITICAL)
+                case _:
+                    file_handler.setLevel(logging.DEBUG)
+                    print(f"{self.__CNAME} : INVALID fileout.level = {loglvl}. Defaulting to DEBUG")
 
-        logging.addLevelName(5, "TRACE")
-        logging.basicConfig(
-            format   = log_format,
-            datefmt  = log_datefmt,
-            handlers = log_handles)
+            root_logger.addHandler(file_handler)
 
-        match stdlog_config["level"]:
-            case 0: logging.getLogger().setLevel(5)    # TRACE
-            case 1: logging.getLogger().setLevel(logging.DEBUG)
-            case 2: logging.getLogger().setLevel(logging.INFO)
-            case 3: logging.getLogger().setLevel(logging.WARN)
-            case 4: logging.getLogger().setLevel(logging.ERROR)
-            case 5: logging.getLogger().setLevel(logging.FATAL)
-            case _: 
-                print(f"{self.__CNAME} : INVALID log level = {stdlog_config['level']}. Defaulting to INFO")
-                logging.getLogger().setLevel(logging.INFO)
-                status = ERC.WARNING
-
+        # else, no logging is done
         return status
