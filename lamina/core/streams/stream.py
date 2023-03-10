@@ -23,7 +23,13 @@ from lamina.outputs.mqtt import MQTT_Output_Service
 
 
 
+# ==============================================================================
+# TODO : docs
+# ==============================================================================
 class Stream:
+
+    # docs
+    # --------------------------------------------------------------------------
     def __init__(self):
         self.__buffer_mq: MemQueue = None
         self.__input = None
@@ -36,7 +42,8 @@ class Stream:
         self.__relay_service = Thread(target = self.__relayer, name = "input_stream_handler")
         self.__is_requested_stop = True
 
-
+    # docs
+    # --------------------------------------------------------------------------
     def configure(self, config: Configurator) -> ERC:
         self.__buffer_mq = MemQueue()
         self.__buffer_mq.add_queue("inbox")
@@ -49,7 +56,8 @@ class Stream:
         
         return ERC.SUCCESS
 
-
+    # docs
+    # --------------------------------------------------------------------------
     def start(self):
         self.__is_requested_stop = False
         self.__relay_service.start()
@@ -57,7 +65,8 @@ class Stream:
         self.__input.start()
         return ERC.SUCCESS
 
-
+    # docs
+    # --------------------------------------------------------------------------
     def stop(self):
         self.__is_requested_stop = True
         self.__input.stop()
@@ -65,9 +74,13 @@ class Stream:
         self.__relay_service.join(timeout = 5)
         return ERC.SUCCESS
 
+    # docs
+    # --------------------------------------------------------------------------
     def is_running(self):
         return self.__input.is_active() or self.__output.is_active() or self.__relay_service.is_alive()
 
+    # docs
+    # --------------------------------------------------------------------------
     def __relayer(self):
         while not self.__is_requested_stop:
             try:
