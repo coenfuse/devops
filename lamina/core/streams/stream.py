@@ -15,9 +15,8 @@ from time import sleep
 from lamina.core.configurators.basic import Configurator
 from lamina.core.utils.error import ERC
 from lamina.core.buffers.membuff import MemQueue
-from lamina.inputs.mqtt import MQTT_Input_Agent, Configuration
-from lamina.outputs.mqtt import MQTT_Output_Service
-
+from lamina.plugins.inputs.mqtt import MQTT_Input_Plugin
+from lamina.plugins.outputs.mqtt import MQTT_Output_Service
 # thirdparty imports
 # ..
 
@@ -50,8 +49,8 @@ class Stream:
 
         self.__output = MQTT_Output_Service(config.get_that_output_config('mqtt', 'bambo'))
         
-        self.__input = MQTT_Input_Agent(
-            config = Configuration(config.get_that_input_config('mqtt', 'rambo')), 
+        self.__input = MQTT_Input_Plugin(
+            config = config.get_that_input_config('mqtt', 'rambo'), 
             on_recv_cb = lambda data : self.__buffer_mq.push("inbox", data))
         
         return ERC.SUCCESS

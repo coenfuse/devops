@@ -10,10 +10,7 @@
             "request": "launch",
             "module": "lamina",
             "justMyCode": true,
-            "args": [
-                "--config", "${workspaceFolder}/config/lamina.toml",
-                "--stdout"
-             ]
+            "args": ["--config", "${workspaceFolder}/config/lamina.toml"]
         }
     ]
 }

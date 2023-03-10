@@ -12,7 +12,7 @@ from threading import Thread
 from time import sleep
 
 # internal imports
-from lamina.outputs.mqtt.config import Configuration
+from lamina.plugins.outputs.mqtt.config import Configuration
 
 # module imports
 from lamina.core.buffers.membuff import MemQueue
