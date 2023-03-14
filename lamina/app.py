@@ -7,6 +7,7 @@ import argparse
 import logging
 import os
 import sys
+import threading
 from time import sleep
 
 # internal imports
@@ -34,8 +35,8 @@ class Lamina:
         self.__CNAME = "LAMINA  "
         self.__config_file = None
         self.__config: Configurator = None 
+        self.__stop_event = threading.Condition()
         self.__stream = Stream()
-        self.__is_requested_stop = False
 
     # TODO : docs
     # --------------------------------------------------------------------------
@@ -57,27 +58,23 @@ class Lamina:
             status = self.__stream.start()
 
         if status == ERC.SUCCESS:
-            self.__is_requested_stop = False
             stdlog.info(f"{self.__CNAME} : running")
-
-            while not self.__is_requested_stop: sleep(2)        # blocking
+            
+            with self.__stop_event:
+                self.__stop_event.wait()
 
             stdlog.info(f"{self.__CNAME} : stopping")
-            # status = self.stop()
+            status = self.__stream.stop()
 
         stdlog.info(f"{self.__CNAME} : stopped")
         return status
 
-    # TODO - docs
-    # --------------------------------------------------------------------------
-    def stop(self) -> ERC:
-        self.__is_requested_stop = True
-        return self.__stream.stop()
 
     # TODO - docs
     # --------------------------------------------------------------------------
-    def is_running(self) -> bool:
-        return self.__stream.is_running()
+    def stop(self) -> None:
+        with self.__stop_event:
+            self.__stop_event.notify_all()
 
 
     # docs
