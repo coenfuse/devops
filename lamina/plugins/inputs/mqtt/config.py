@@ -9,7 +9,7 @@ from typing import List
 # ..
 
 # module imports
-from lamina.core.utils import stdlog
+from lamina.utils import stdlog
 from lamina.drivers.mqtt import Subscription
 
 # thirdparty imports

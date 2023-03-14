@@ -9,9 +9,9 @@
 from lamina.plugins.inputs.mqtt.config import Configurator
 
 # module imports
-from lamina.core.utils import stdlog
+from lamina.utils import stdlog
 from lamina.drivers.mqtt import Agent, Message
-from lamina.core.utils.error import ERC
+from lamina.utils.error import ERC
 
 # thirdparty imports
 # ..

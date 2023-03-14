@@ -16,13 +16,13 @@ from lamina.plugins.outputs.mqtt.config import Configuration
 
 # module imports
 from lamina.core.buffers.membuff import MemQueue
-from lamina.core.utils import stdlog
+from lamina.utils import stdlog
 from lamina.drivers.mqtt import Agent as Client
 from lamina.drivers.mqtt import Message
-from lamina.core.utils.error import ERC
+from lamina.utils.error import ERC
 
 # thirdparty imports
-import json5
+# ..
 
 
 # ------------------------------------------------------------------------------

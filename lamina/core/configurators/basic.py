@@ -3,7 +3,7 @@ import tomllib
 from typing import Dict
 
 # package imports
-from lamina.core.utils.error import ERC
+from lamina.utils.error import ERC
 
 # thirdparty imports
 # ..

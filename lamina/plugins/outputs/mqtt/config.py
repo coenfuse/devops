@@ -5,7 +5,7 @@
 # ..
 
 # module imports
-from lamina.core.utils import stdlog
+from lamina.utils import stdlog
 
 # thirdparty imports
 import json5

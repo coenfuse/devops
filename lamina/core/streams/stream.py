@@ -13,10 +13,11 @@ from time import sleep
 
 # module imports
 from lamina.core.configurators.basic import Configurator
-from lamina.core.utils.error import ERC
 from lamina.core.buffers.membuff import MemQueue
 from lamina.plugins.inputs.mqtt import MQTT_Input_Plugin
 from lamina.plugins.outputs.mqtt import MQTT_Output_Service
+from lamina.utils.error import ERC
+
 # thirdparty imports
 # ..
 
