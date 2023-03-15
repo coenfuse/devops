@@ -14,8 +14,8 @@ from lamina.plugins.inputs.mqtt.plugin import MQTT_Input_Plugin
 
 # pkg const metadata
 # ------------------------------------------------------------------------------
-NAME = "INPUT  - MQTT : "
-INFO = "MQTT subscription service with error handling and buffering"
+NAME = "MQTT_INPLUG"
+INFO = "MQTT subscription plugin"
 AUTH = "github.com/coenfuse"
 VERS = ""
 # ..

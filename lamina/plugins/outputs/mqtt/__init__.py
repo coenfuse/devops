@@ -14,8 +14,8 @@ from lamina.plugins.outputs.mqtt.plugin import MQTT_Output_Plugin
 
 # pkg const metadata
 # ------------------------------------------------------------------------------
-NAME = "OUTPUT - MQTT : "
-INFO = "MQTT publishing service with error handling, encoding and buffering"
+NAME = "MQTT_OUTPLUG"
+INFO = "MQTT publishing plugin with error handling, encoding and rate control"
 AUTH = "github.com/coenfuse"
 VERS = ""
 # ..

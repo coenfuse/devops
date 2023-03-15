@@ -12,7 +12,6 @@ from lamina.plugins.inputs.mqtt.config import Configurator
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
-from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
