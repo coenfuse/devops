@@ -10,38 +10,45 @@
 [inputs]
 
     # documentation
-    [inputs.mqtt.rambo]
+    [inputs.mqtt.local]
         host.ip = "localhost"
         host.port = 1883
         auth.username = ""
         auth.password = ""
         session.clean = true
         session.timeout_s = 10
-        session.reconnect_on_fail = true
-        session.reconnect_timeout_s = 10
-        logging.enabled = true
-        logging.level = 0
 
-        [[inputs.mqtt.rambo.subs]]
+        [[inputs.mqtt.local.subs]]
             topic = "lamina/recva"
             qos = 0
             mid = 23
             retain = true
-            tag = "pumbo"
 
-        [[inputs.mqtt.rambo.subs]]
+        [[inputs.mqtt.local.subs]]
             topic = "lamina/recvb"
             qos = 0
             mid = 45
             retain = true
-            tag = "jumbo"
 
-        [[inputs.mqtt.rambo.subs]]
+        [[inputs.mqtt.local.subs]]
             topic = "lamina/recvc"
             qos = 0
             mid = 21
             retain = true
-            tag = "jumbo"
+
+    [inputs.mqtt.hiveb]
+        host.ip = "broker.hivemq.com"
+        host.port = 1883
+        auth.username = ""
+        auth.password = ""
+        session.clean = true
+        session.timeout_s = 10
+
+        [[inputs.mqtt.hiveb.subs]]
+            topic = "lamina/recva"
+            qos = 0
+            mid = 23
+            retain = true
 
 
 # documentation
@@ -55,34 +62,21 @@
         auth.password = ""
         session.clean = true
         session.timeout_s = 10
-        session.reconnect_on_fail = true
-        session.reconnect_timeout_s = 10
-        logging.enabled = true
-        logging.level = 0
 
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/senda"
             qos = 0
             mid = "auto"
             retain = true
-            rate_s = 1
-            variance = 4
-            timeout = 5
-            tag = "jumbo"          # regex
 
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/sendb"
             qos = 0
             mid = 21
             retain = false
-            rate_s = 3
-            variance = 0
-            timeout = 7
-            tag = "pumbo"           # regex
 
 
 # documentation
 [stream]
-    [stream.basic]
-        inputs = ["mqtt.rambo"]
-        outputs = ["mqtt.bambo"]
+    inputs = ["mqtt.local", "mqtt.hiveb"]
+    outputs = ["mqtt.bambo"]

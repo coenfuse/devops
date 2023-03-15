@@ -31,7 +31,7 @@ class Configurator:
         try:
             print(f"{self.__CNAME} reading config at - {config_path}")
             self.__data = tomllib.load(open(config_path, mode = "rb"))
-            # self.inspect()
+            # TODO : self.inspect()
             return ERC.SUCCESS
       
         except Exception as e:
@@ -49,7 +49,7 @@ class Configurator:
         
     # docs
     # --------------------------------------------------------------------------
-    def get_inputs_config(self) -> Dict[str, any] | ERC:
+    def get_inputs_config(self) -> Dict[str, dict] | ERC:
         try:
             return self.__data["inputs"]
         except Exception as e:

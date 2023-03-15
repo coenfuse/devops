@@ -43,7 +43,7 @@ def warn(message: str) -> None:
 # docs
 # ------------------------------------------------------------------------------
 def error(message: str) -> None:
-    __logger__.error(message, exc_info = True, stack_info = True)
+    __logger__.error(message)
 
 
 # docs

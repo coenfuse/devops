@@ -52,9 +52,7 @@ class ERC(Enum):
     NO_CONNECTION = 10
 
 
-# ,,
-# TODO : Rename Agent to Client
-class Agent:
+class MQTTClient:
 
     # TODO : add support for userdata and use in cb_on_connect
     # TODO : Add interface for users to own callbacks for all mqtt events

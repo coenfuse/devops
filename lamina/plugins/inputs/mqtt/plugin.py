@@ -9,9 +9,10 @@
 from lamina.plugins.inputs.mqtt.config import Configurator
 
 # module imports
-from lamina.utils import stdlog
-from lamina.drivers.mqtt import Agent, Message
+from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
+from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
+from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
@@ -25,19 +26,26 @@ class MQTT_Input_Plugin:
 
     # TODO : docs
     # --------------------------------------------------------------------------
-    def __init__(self, config: dict, on_recv_cb):
-        self.__NAME   = "MQTTSRV_I"
+    def __init__(self):
+        self.__NAME   = "INPLUG - MQTT"
+        self.__client: _MQTTDriver_ = None
+
+
+    # TODO : docs and checks
+    # --------------------------------------------------------------------------
+    def configure(self, client_id: str, config: dict, on_recv_cb) -> ERC:
+        self.__client_id = client_id
         self.__config = Configurator(config)
-        self.__client: Agent = None
         self.__on_recv_cb = on_recv_cb
+        return ERC.SUCCESS
 
 
     # TODO : docs
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
         status = ERC.SUCCESS
-        self.__client = Agent(
-            client_id = self.__config.get_client_id(), 
+        self.__client = _MQTTDriver_(
+            client_id = self.__client_id, 
             clean_session = self.__config.get_is_clean_session(), 
             silent = False)
 
@@ -75,10 +83,7 @@ class MQTT_Input_Plugin:
     # the MQTT Agent
     # --------------------------------------------------------------------------
     def __generic_msg_collector(self, client_ref, userdata, message):
-        message = Message(message)
-        # open_msg = jsoncodec.decode(message.payload)
-        # filt_msg = 
-        stdlog.debug(f"{self.__NAME} : recv message {message.payload}")
+        message = _MQTTMessage_(message)
         self.__on_recv_cb(message)
 
         # use the created filter to parse/sanitize the received message

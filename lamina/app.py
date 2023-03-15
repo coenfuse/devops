@@ -8,7 +8,6 @@ import logging
 import os
 import sys
 import threading
-from time import sleep
 
 # internal imports
 import lamina.metadata as meta
@@ -74,7 +73,7 @@ class Lamina:
     # --------------------------------------------------------------------------
     def stop(self) -> None:
         with self.__stop_event:
-            self.__stop_event.notify_all()
+            self.__stop_event.notify()
 
 
     # docs
@@ -84,9 +83,7 @@ class Lamina:
         parser = argparse.ArgumentParser()
 
         parser.add_argument("--config", type=str,
-                            help='path to json file with application configurations')
-        parser.add_argument("--stdout", action='store_true',
-                            help="whether to diplay logs on standard output")
+            help='path to json file with application configurations')
 
         # argv[0] is the name of program and thus len(argv) is always 1
         # So, when argv[0] < 2, it means the passed cmdline input is incomplete
