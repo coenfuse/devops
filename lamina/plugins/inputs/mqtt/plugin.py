@@ -3,7 +3,7 @@
 
 
 # standard imports
-# ..
+from time import sleep
 
 # internal imports
 from lamina.plugins.inputs.mqtt.config import Configurator

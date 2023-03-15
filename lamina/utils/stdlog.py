@@ -49,4 +49,4 @@ def error(message: str) -> None:
 # docs
 # ------------------------------------------------------------------------------
 def critical(message: str) -> None:
-    __logger__.critical(message, exc_info = True, stack_info = True)
+    __logger__.critical(message) # exc_info = True, stack_info = True)

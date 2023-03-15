@@ -111,7 +111,7 @@ class Lamina:
             fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : %(message)s")
         
         # setup root logger and add custom level
-        logging.addLevelName(5, "DEBUG")
+        logging.addLevelName(5, "TRACE")
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.NOTSET)
          
