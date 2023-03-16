@@ -171,16 +171,12 @@ class MQTTClient:
     # TODO : docs
     # --------------------------------------------------------------------------
     def publish(self, msg: Message) -> int:
-        status = ERC.SUCCESS
-        
         if self.is_connected():
             rc, mid = self.__agent.publish(msg.topic, msg.payload, msg.qos, msg.retain)
             stdlog.trace(f"{self.__NAME} : [{self.__id}] attempting publish on topic: {msg.topic} with qos: {msg.qos} and mid: {mid}")
-            status = ERC.SUCCESS if rc == 0 else ERC.FAILURE
+            return ERC.FAILURE if rc != 0 else ERC.WARNING
         else:
-            status = ERC.WARNING
-
-        return status.value
+            return ERC.NO_CONNECTION
 
 
     # **************************************************************************
@@ -227,7 +223,7 @@ class MQTTClient:
     # --------------------------------------------------------------------------
     def __cb_on_publish(self, client, userdata, mid):
         if not self.__is_silent:
-            stdlog.trace(f"{self.__NAME} : [{self.__id}] published SUCCESS with mid: {mid}")
+            stdlog.trace(f"{self.__NAME} : [{self.__id}] publish SUCCESS with mid: {mid}")
 
 
     # docs
