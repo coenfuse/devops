@@ -12,6 +12,7 @@ from lamina.plugins.inputs.mqtt.config import Configurator
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
+from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
@@ -23,19 +24,28 @@ from lamina.utils.error import ERC
 # ==============================================================================
 class MQTT_Input_Plugin:
 
-    # TODO : docs
+    # Simple constructor initializing the name of plugin that will be used in
+    # logging and creating an empty client variable that will be later initialzed
+    # MQTTClient object
     # --------------------------------------------------------------------------
     def __init__(self):
         self.__NAME   = "INPLUG - MQTT"
         self.__client: _MQTTDriver_ = None
 
 
-    # TODO : docs and checks
+    # Configure the Plugin
+    # - client_id       : plugin will create a client instance with this name. 
+    #                     The name must be a non-zero string and unique for both
+    #                     broker and for local system.
+    # - config          : config block from global configuration
+    # - on_recv_cb_hndl : A custom message handler that will be invoked whenever
+    #                     a new message is received by the client in this plugin
+    #                     The handler must take in one parameter that will be 
+    #                     receievd message
     # --------------------------------------------------------------------------
-    def configure(self, client_id: str, config: dict, on_recv_cb) -> ERC:
-        self.__client_id = client_id
-        self.__config = Configurator(config)
-        self.__on_recv_cb = on_recv_cb
+    def configure(self, client_id: str, config: dict, on_recv_cb_hndl) -> ERC:
+        self.__config = Configurator(config, client_id)
+        self.__on_recv_cb_hndl = on_recv_cb_hndl
         return ERC.SUCCESS
 
 
@@ -44,7 +54,7 @@ class MQTT_Input_Plugin:
     def start(self) -> ERC:
         status = ERC.SUCCESS
         self.__client = _MQTTDriver_(
-            client_id = self.__client_id, 
+            client_id = self.__config.get_client_id(), 
             clean_session = self.__config.get_is_clean_session(), 
             silent = False)
 
@@ -83,7 +93,7 @@ class MQTT_Input_Plugin:
     # --------------------------------------------------------------------------
     def __generic_msg_collector(self, client_ref, userdata, message):
         message = _MQTTMessage_(message)
-        self.__on_recv_cb(message)
+        self.__on_recv_cb_hndl(message)
 
         # use the created filter to parse/sanitize the received message
         # then send the data-block to specified callback where something happens

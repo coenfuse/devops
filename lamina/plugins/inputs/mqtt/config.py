@@ -9,7 +9,6 @@ from typing import List
 # ..
 
 # module imports
-from lamina.utils import stdlog
 from lamina.drivers.mqtt import Subscription
 
 # thirdparty imports
@@ -24,33 +23,66 @@ class Configurator:
 
     # TODO : docs
     # --------------------------------------------------------------------------
-    def __init__(self, config: dict):
-        self.__config: dict = config
-        try:
-            subs = self.__config.get("subs")
-            subscriptions = []
-            for sub in subs:
-                sub_obj = Subscription()
-                sub_obj.mid = sub["mid"]
-                sub_obj.qos = sub["qos"]
-                sub_obj.topic = sub["topic"]
-                subscriptions.append(sub_obj)
-
-            self.__config["subs"] = subscriptions
-
-        except Exception as e:
-            stdlog.error(f"config parse FAILURE with exception: {e}")
+    def __init__(self, config: dict, client_id: str):
+        self.__config = {}
+        self.__config["id"] = client_id
+        self.__inspect(suspect = config)    # may raise errors
 
 
-    # TODO : add inspect() maybe, consider benefit of non-exception behavior
+    # Not adding type or validity checks here, just existence checks. Since types
+    # and validity checks are handled by the driver and plugins themselves
     # --------------------------------------------------------------------------
-    # ..
+    def __inspect(self, suspect) -> None:
+        if not isinstance(suspect, dict):
+            raise TypeError("Invalid MQTT config block format. Must be a TOML block with header in format -> [inputs.mqtt.<plugin_name>]")
+        
+        # check host config keys
+        if "host" not in suspect or not isinstance(suspect["host"], dict):
+            raise KeyError(f"Missing 'host' config group in 'inputs.mqtt.{self.get_client_id()}'")
+        else:
+            for attr in ["ip", "port"]:
+               if attr not in suspect["host"]:
+                   raise KeyError(f"Missing '{attr}' config key in 'mqtt.{self.get_client_id()}.host'")
+
+        # check session config keys
+        if "session" not in suspect or not isinstance(suspect["session"], dict):
+            raise KeyError(f"Missing 'session' config group in 'inputs.mqtt.{self.get_client_id()}'")
+        else:
+            for attr in ["clean", "timeout_s"]:
+                if attr not in suspect["session"]:
+                   raise KeyError(f"Missing '{attr}' config key in 'mqtt.{self.get_client_id()}.session'")
+
+        # check subscriptions config
+        if "subs" not in suspect or not isinstance(suspect["subs"], list):
+            raise KeyError(f"Missing 'subs' list block. Must have TOML list with headers as -> [[inputs.mqtt.{self.get_client_id()}.subs]]")
+        elif suspect["subs"] == [{}]:
+            raise ValueError(f"Empty 'subs' list in inputs.mqtt.{self.get_client_id()}. Must have atleast one subscription detail")
+        else:
+            subs_list = []
+            sub_index = 0
+            for sub in suspect["subs"]:
+                sub_obj = Subscription()
+                try:
+                    sub_obj.mid = sub["mid"]
+                    sub_obj.qos = sub["qos"]
+                    sub_obj.topic = sub["topic"]
+                except Exception as e:
+                    raise KeyError(f"Missing key: {e} in subscription item: {sub_index} in config: inputs.mqtt.{self.get_client_id()}")
+                subs_list.append(sub_obj)
+                sub_index = sub_index + 1
+            suspect["subs"] = subs_list
+
+        # ..
+
+        # assign suspect to internal config attribute after all inspections
+        for key, value in suspect.items():
+            self.__config[key] = value
 
 
     # TODO : docs
     # --------------------------------------------------------------------------
     def get_client_id(self) -> str:
-        return "tuco"
+        return self.__config["id"]
 
 
     # TODO : docs
@@ -75,18 +107,6 @@ class Configurator:
     # --------------------------------------------------------------------------
     def get_keep_alive_s(self) -> int:
         return self.__config["session"]["timeout_s"]
-
-
-    # TODO : docs
-    # --------------------------------------------------------------------------
-    def get_username(self) -> str:
-        return self.__config["auth"]["username"]
-
-
-    # TODO : docs
-    # --------------------------------------------------------------------------
-    def get_password(self) -> str:
-        return self.__config["auth"]["password"]
 
 
     # TODO : docs

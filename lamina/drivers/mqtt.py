@@ -83,16 +83,15 @@ class MQTTClient:
     # broker) and whether you want a clean session with the broker. Pass an 
     # optional silent parameters that controls whether this client logs its 
     # runtime information or not. 
-    # Not handling exceptions here since it doesn't make sense to intialize
-    # the object with invalid values and since ctor can't return values, exceptions
-    # are the only logicaly way I see to actually raise errors.
+    # Not handling exceptions here since ctor can't return values, exceptions
+    # are the only logicaly way I see to actually raise errors init errors
     # --------------------------------------------------------------------------
     def __init__(self, 
             client_id: str, 
             clean_session: bool, 
             silent: bool = True
         ):
-        self.__NAME  = "DRIVER_MQTT"
+        self.__NAME  = "DRIVER - MQTT"
 
         if typing.is_str(client_id, "client_id", "and must be a non-zero length string"):
             self.__id = client_id
