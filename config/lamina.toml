@@ -13,34 +13,24 @@
     [inputs.mqtt.local]
         host.ip = "localhost"
         host.port = 1883
-        auth.username = ""
-        auth.password = ""
         session.clean = true
         session.timeout_s = 10
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recva"
             qos = 0
-            mid = 23
-            retain = true
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recvb"
             qos = 0
-            mid = 45
-            retain = true
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recvc"
             qos = 0
-            mid = 21
-            retain = true
 
     [inputs.mqtt.hiveb]
         host.ip = "broker.hivemq.com"
         host.port = 1883
-        auth.username = ""
-        auth.password = ""
         session.clean = true
         session.timeout_s = 10
 
@@ -58,8 +48,6 @@
     [outputs.mqtt.bambo]
         host.ip = "localhost"
         host.port = 1883
-        auth.username = ""
-        auth.password = ""
         session.clean = true
         session.timeout_s = 10
 
