@@ -153,7 +153,7 @@ class MQTTClient:
         if self.__agent.disconnect(reasoncode = 0) == 0:
             self.__agent.loop_stop(force = to_apply_force)          # blocking
             return self.ERC.SUCCESS
-        return self.ERC.FAILURE
+        return self.ERC.FAILURE.value
 
 
     # returns boolean signaling whether the client is connected with broker or not
@@ -174,9 +174,13 @@ class MQTTClient:
         status = self.ERC.SUCCESS if self.is_connected() else self.ERC.NO_CONNECTION
 
         if status == self.ERC.SUCCESS:
-            rc, mid = self.__agent.subscribe(req.topic, req.qos)
-            stdlog.trace(f"{self.__NAME} : [{self.__id}] subscribe request sent with mid: {mid} for topic: {req.topic}, qos: {req.qos}")
-            status = self.ERC.FAILURE if rc != 0 else self.ERC.SUCCESS
+            try:
+                rc, mid = self.__agent.subscribe(req.topic, req.qos)
+                stdlog.trace(f"{self.__NAME} : [{self.__id}] subscribe request sent with mid: {mid} for topic: {req.topic}, qos: {req.qos}")
+                status = self.ERC.FAILURE if rc != 0 else self.ERC.SUCCESS
+            except Exception as e:
+                stdlog.error(f"{self.__NAME} : [{self.__id}] exception - {e}, while trying to subscribe to topic: '{req.topic}' & qos: '{req.qos}'")
+                status = self.ERC.EXCEPTION
 
         if status == self.ERC.SUCCESS:
             self.__agent.message_callback_add(req.topic, req.callback)
@@ -214,9 +218,9 @@ class MQTTClient:
         if self.is_connected():
             rc, mid = self.__agent.publish(msg.topic, msg.payload, msg.qos, msg.retain)
             stdlog.trace(f"{self.__NAME} : [{self.__id}] attempting publish on topic: {msg.topic} with qos: {msg.qos} and mid: {mid}")
-            return self.ERC.FAILURE if rc != 0 else self.ERC.WARNING
+            return self.ERC.WARNING.value if rc != 0 else self.ERC.SUCCESS.value
         else:
-            return self.ERC.NO_CONNECTION
+            return self.ERC.NO_CONNECTION.value
 
 
     # **************************************************************************

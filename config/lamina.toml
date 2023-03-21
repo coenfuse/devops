@@ -54,7 +54,7 @@
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/senda"
             qos = 0
-            mid = "auto"
+            mid = 0
             retain = true
 
         [[outputs.mqtt.bambo.pubs]]
