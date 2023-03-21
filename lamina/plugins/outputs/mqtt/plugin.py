@@ -1,9 +1,6 @@
-# this mqtt based output service handles all the outbound messages to a remote
-# MQTT broker. Any interested component can request this service to publish 
-# messages given that the agent is connected to the broker. In case of the 
-# connection is dropped, the service will maintain a local buffer to store all 
-# the pending outbound messages. Once the service reconnects to the broker, it 
-# will resume pushing the messages to the broker.
+# This module contains implementation of MQTT_Output_Plugin that allows Lamina
+# to have subscriptions and receive inbound messages over MQTT network. The
+# following plugin uses an internally defined Configurator and MQTT Driver.
 
 
 # standard imports
@@ -23,10 +20,26 @@ from lamina.utils import stdlog
 # ..
 
 
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# This plugins provides functionality for publishing messages to an MQTT broker.
+# Any interested component can request this service to publish messages, provided
+# the agent is connected to the broker. If the connection is dropped, the service
+# will maintain a local buffer to store all the pending outbound messages. Once 
+# the service reconnects to the broker, it will resume pushing the messages to 
+# the broker. This plugin allows users to publish messages to an MQTT broker, 
+# connecting to a single broker at a time that is available locally or remotely.
+# Outbound messages are first staged in an outbox buffer, waiting for the publi-
+# sher runtime to publish them serially. The functionality of the outbox buffer 
+# will be later expanded into publisher rate controlling.
+# ==============================================================================
 class MQTT_Output_Plugin:
 
-    # docs
+    # Simple constructor initializing the name of plugin that will be used in
+    # logging and creating an empty client variable that will be laterr initialized
+    # MQTTClient object
+    # We also initialize a buffer instance that will store all the outbound msgs
+    # and a publishing service thread that will use that buffer to actually send
+    # out the messages to MQTT broker
     # --------------------------------------------------------------------------
     def __init__(self):
         self.__CNAME   = "OUTPLUG - MQTT"
@@ -39,20 +52,22 @@ class MQTT_Output_Plugin:
         self.__is_requested_stop = True
 
 
-    # docs
+    # Configure the Plugin
+    # - client_id : plugin will create a client instance with
+    # - config    : config block from global configuration
     # --------------------------------------------------------------------------
     def configure(self, client_id: str, config: dict) -> ERC:
-        self.__client_id = client_id
-        self.__config = Configuration(config)
+        self.__config = Configuration(config, client_id)  # may raise exceptions
         return ERC.SUCCESS
 
 
-    # docs
+    # starts te mqtt output plugin by connecting to broker on specified configs
+    # and starting the publisher service runtime
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
         status = ERC.SUCCESS
         self.__client = _MQTTDriver_(
-            client_id = self.__client_id,
+            client_id = self.__config.get_client_id(),
             clean_session = self.__config.get_is_clean_session(),
             silent = False)
 
@@ -91,13 +106,6 @@ class MQTT_Output_Plugin:
         # TODO : encode the message using appropriate encoder
         self.__buffer.push("outbox", message)
 
-    # TODO : Implement the reconnector, this ensures the client is cleared, and
-    # restarted cleanly. This must happen only if approval is given via application
-    # config and must be activated after a certain threshold only. Like failcount.
-    # ---------------------------------------------------------------------------
-    def __reconnect_on_fail(self):
-        pass
-
 
     # TODO : Add facility for supporting failed messages, that are saved in 
     # separate buffer (file maybe?)
@@ -112,10 +120,18 @@ class MQTT_Output_Plugin:
             try: 
                 message = self.__buffer.peek("outbox", timeout_s = 5)
                 if isinstance(message, _MQTTMessage_):
-                    message.topic = self.__config.get_publish_topic()           # must be assigned by processor, may be removed later        
-                    if self.__client.publish(message) == 0:
+                    publish_status = 0
+                    for pub_config in self.__config.get_publish_topics():
+                        message.topic = pub_config["topic"]
+                        message.qos   = pub_config["qos"]
+                        message.mid   = pub_config["mid"]
+                        message.retain= pub_config["retain"]
+                        publish_status += self.__client.publish(message)        # aggregate all the publish responses
+                    
+                    if publish_status == 0:                                     # only pop from outbox if all the publishing is done successfully
                         self.__buffer.pop("outbox")
 
+            # TODO : think of removing it since this won't happen most probably
             # when the queue doesn't exist
             except KeyError as e:
                 stdlog.critical(f"{self.__CNAME} : buffer queue does not exist")
