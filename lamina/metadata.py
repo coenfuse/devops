@@ -32,7 +32,7 @@ VERS = ''
 # pkg var metadata
 # ------------------------------------------------------------------------------
 __VER_MAJOR = 0
-__VER_MINOR = 1
+__VER_MINOR = 'P'
 __VER_PATCH = 0
 __VER_BUILD = 1
 
