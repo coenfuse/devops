@@ -1,5 +1,6 @@
-# description about this module in 50 words
-# ..
+# This module contains implementation of MQTT_Input_Plugin that allows Lamina
+# to have subscriptions and receive inbound messages over MQTT network. The
+# following plugin uses an internally defined Configurator and MQTT Driver.
 
 
 # standard imports
@@ -18,9 +19,12 @@ from lamina.utils import stdlog
 # ..
 
 
-
 # ==============================================================================
-# TODO : docs
+# A simple MQTT input plugin that enables a connection to single broker that is
+# available locally or remotely. The plugin also permits multiple subscriptions
+# with custom callback, so user can specify different event triggers on receiving
+# messages on different topics. This class does not provide input buffering or
+# message publishing facility.
 # ==============================================================================
 class MQTT_Input_Plugin:
 
@@ -44,45 +48,59 @@ class MQTT_Input_Plugin:
     #                     receievd message
     # --------------------------------------------------------------------------
     def configure(self, client_id: str, config: dict, on_recv_cb_hndl) -> ERC:
-        self.__config = Configurator(config, client_id)
+        self.__config = Configurator(config, client_id)    # may raise exception
         self.__on_recv_cb_hndl = on_recv_cb_hndl
         return ERC.SUCCESS
 
 
-    # TODO : docs
+    # starts the mqtt input plugin by connecting to broker on specified configs
+    # and subscribing to all the topics mentioned.
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
-        status = ERC.SUCCESS
+        status = ERC.FAILURE
+        
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(), 
             clean_session = self.__config.get_is_clean_session(), 
             silent = False)
+        
+        if self.__client is not None:
+            status = ERC.SUCCESS
 
-        self.__client.connect(
-            host = self.__config.get_host(), 
-            port = self.__config.get_port(), 
-            keep_alive_s = self.__config.get_keep_alive_s())
+        if status == ERC.SUCCESS:
+            res = self.__client.connect(
+                host = self.__config.get_host(), 
+                port = self.__config.get_port(), 
+                keep_alive_s = self.__config.get_keep_alive_s())
+            status = ERC.SUCCESS if res == 0 else ERC.FAILURE
 
-        for subscription in self.__config.get_subscriptions():
-            subscription.callback = self.__generic_msg_collector
-            self.__client.subscribe(subscription)
+        if status == ERC.SUCCESS:
+            for subscription in self.__config.get_subscriptions():
+                subscription.callback = self.__generic_msg_collector
+                if self.__client.subscribe(subscription) != 0:
+                    status = ERC.WARNING
+                    break
 
         return status
 
 
-    # TODO : docs
+    # unsusbscribes from all the topic mentioned in the startup config, disconnects
+    # from all the broker and deinitializes the MQTTClient instance variable
     # --------------------------------------------------------------------------
-    def stop(self):
-        status = ERC.SUCCESS
-        
+    def stop(self) -> ERC:
+        # unsub from all registered topics, don't care about unsubscription response
+        # since we are disconnecting from the broker anyway
         for subscription in self.__config.get_subscriptions():
             self.__client.unsubscribe(subscription)
 
-        self.__client.disconnect()
-        self.__client = None
+        if self.__client.disconnect() == 0:
+            self.__client = None
+            return ERC.SUCCESS
+        else:
+            return ERC.FAILURE
+    
 
-
-    # TODO : docs
+    # you really need docs for this too?
     # --------------------------------------------------------------------------
     def is_active(self) -> bool:
         return self.__client.is_connected()
@@ -98,6 +116,3 @@ class MQTT_Input_Plugin:
         # use the created filter to parse/sanitize the received message
         # then send the data-block to specified callback where something happens
         # to that data object.
-
-    # TODO : Add a reconnector that ensures consistent connection. More like an 
-    # internal watchdog but a lazy one. Since it requires a whip to activate.
