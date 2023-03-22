@@ -65,8 +65,8 @@ class MemQueue:
     # we notify all the waiters that may be waiting on the queue using peek() by
     # aquiring lock on not_empty cv of Queue class.
     # --------------------------------------------------------------------------
-    def push(self, qname: str, value: any, block: bool = True, timeout_s: float = None) -> None:
-        self.__db[qname].put(value, block, timeout_s)
+    def push(self, qname: str, value: any, block_thread: bool = True, timeout_s: float = None) -> None:
+        self.__db[qname].put(value, block_thread, timeout_s)
         
         with self.__db[qname].not_empty:
             self.__db[qname].not_empty.notify()
@@ -86,8 +86,8 @@ class MemQueue:
     # blocked until the queue is non-empty. If timeout_s is not None, then IndexError
     # after timeout has passed. If the queue doesn't exist, KeyError is raised.
     # --------------------------------------------------------------------------
-    def peek(self, qname: str, blocking: bool = True, timeout_s: float = None):
-        return self.peek_at(qname, 0, blocking, timeout_s)
+    def peek(self, qname: str, block_thread: bool = True, timeout_s: float = None):
+        return self.peek_at(qname, 0, block_thread, timeout_s)
         
 
     # Gives you a copy of the item at a specific index in a queue.
@@ -97,8 +97,8 @@ class MemQueue:
     # - If queue is not_empty, blocked, then value is returned
     # - If the queue doesn't exist, KeyError is raised
     # --------------------------------------------------------------------------
-    def peek_at(self, qname: str, index: int, blocking: bool = True, timeout_s: float = None):
-        if not blocking:
+    def peek_at(self, qname: str, index: int, block_thread: bool = True, timeout_s: float = None):
+        if not block_thread:
             return deepcopy(self.__db[qname].queue[index])
         
         # only wait if the queue is empty, else the program may block indefinitely
