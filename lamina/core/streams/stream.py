@@ -108,6 +108,6 @@ class Stream:
                 item = self.__mq.pop("inbox", timeout_s = 2)
                 if item is not None:
                     for output_plug in self.__outputs:
-                        output_plug.request_send(item)
+                        output_plug.send(item)
             except:
                 pass

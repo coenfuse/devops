@@ -115,7 +115,7 @@ class MQTT_Output_Plugin:
     # will ensure the publishing of message either instantly, after time_interval,
     # or whenever the connection resumes.
     # --------------------------------------------------------------------------
-    def request_send(self, message):
+    def send(self, message):
         # TODO : encode the message using appropriate encoder
         self.__buffer.push("outbox", message)
 
