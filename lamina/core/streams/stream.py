@@ -14,7 +14,7 @@ from time import sleep
 
 # module imports
 from lamina.core.configurators.basic import Configurator
-from lamina.core.buffers.membuff import MemQueue
+from lamina.core.buffers.membuff import MemQueue, MQItem
 from lamina.plugins.lut import PLUGIN_LUT
 from lamina.utils.error import ERC
 
@@ -50,7 +50,7 @@ class Stream:
             inplug.configure(
                 client_id = inplug_name, 
                 config = config.get_that_input_config(inplug_type, inplug_name), 
-                on_recv_cb_hndl = lambda data: self.__mq.push("inbox", data))
+                on_recv_cb_hndl = lambda data: self.__mq.push("inbox", MQItem(data)))
             self.__inputs.append(inplug)
 
         for output_plugin in config.get_stream_config().get("outputs"):

@@ -8,6 +8,7 @@ from copy import deepcopy
 from queue import Queue
 from threading import Lock
 from typing import Dict
+import time
 
 # internal imports
 # ..
@@ -20,6 +21,11 @@ from typing import Dict
 
 
 
+# TODO : MemQueueManage (handles all blocking initialization, enforces MQItem creation
+# etc)
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 class MemQueue:
 
     # TODO : Create a queue as a default init, this removes the user from having
@@ -103,3 +109,46 @@ class MemQueue:
         # the flow eventually reach here once the thread resumes execution, 
         # whether or not it was blocked.
         return deepcopy(self.__db[qname].queue[index])
+    
+
+
+# docs
+# ------------------------------------------------------------------------------
+class MQItem:
+
+    # initializes a new MQItem with value of any type and optional tag
+    # --------------------------------------------------------------------------
+    def __init__(self, val: any, tag: str = ""):
+        self.__init_time: float = time.time()
+        self.__tag: str = tag
+        self.__val: any = val
+
+    # returns creation time for this MQItem instance in float since epoch
+    # --------------------------------------------------------------------------
+    def get_time(self) -> float:
+        return self.__init_time
+    
+    # returns string formatted creation time for this MQItem in GMT
+    # --------------------------------------------------------------------------
+    def get_ftime(self, time_fmt: str) -> str:
+        return time.strftime(time_fmt, time.gmtime(self.__init_time))
+
+    # returns the tag attached to this MQItem instance (if any)
+    # -------------------------------------------------------------------------- 
+    def get_tag(self) -> str:
+        return self.__tag
+    
+    # assign a tag to this MQItem instance
+    # --------------------------------------------------------------------------
+    def set_tag(self, tag: str) -> None:
+        self.__tag = tag
+
+    # get the value stored in this MQItem instance
+    # --------------------------------------------------------------------------
+    def get_value(self) -> any:
+        return self.__val
+    
+    # update the held value in this MQItem instance
+    # --------------------------------------------------------------------------
+    def set_value(self, value: any) -> None:
+        self.__val = value

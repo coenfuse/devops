@@ -19,14 +19,17 @@
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recva"
             qos = 0
+            tag = "lma"
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recvb"
             qos = 0
+            tag = "lmb"
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recvc"
             qos = 0
+            tag = "lmc"
 
     [inputs.mqtt.hiveb]
         host.ip = "broker.hivemq.com"
@@ -37,8 +40,7 @@
         [[inputs.mqtt.hiveb.subs]]
             topic = "lamina/recva"
             qos = 0
-            mid = 23
-            retain = true
+            tag = "rma"
 
 
 # documentation
@@ -60,7 +62,7 @@
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/sendb"
             qos = 0
-            mid = 21
+            mid = 0
             retain = false
 
 

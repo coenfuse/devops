@@ -65,34 +65,47 @@ class MQTT_Output_Plugin:
     # and starting the publisher service runtime
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
-        status = ERC.SUCCESS
+        status = ERC.FAILURE
+
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(),
             clean_session = self.__config.get_is_clean_session(),
             silent = False)
 
-        self.__client.connect(
-            host = self.__config.get_host(),
-            port = self.__config.get_port(),
-            keep_alive_s = self.__config.get_keep_alive_s())
+        if self.__client is not None:
+            status = ERC.SUCCESS        
 
-        self.__is_requested_stop = False
-        self.__publisher.start()
+        if status == ERC.SUCCESS:
+            res = self.__client.connect(
+                host = self.__config.get_host(),
+                port = self.__config.get_port(),
+                keep_alive_s = self.__config.get_keep_alive_s())
+            status = ERC.SUCCESS if res == 0 else ERC.FAILURE
+
+        if status == ERC.SUCCESS:
+            self.__is_requested_stop = False
+            self.__publisher.start()
 
         return status
 
 
-    # docs
+    # stops the publishing service, disconnects from broker and deinitializes the
+    # MQTT instance variable
     # --------------------------------------------------------------------------
-    def stop(self):
+    def stop(self) -> ERC:
+
         status = ERC.SUCCESS
         self.__is_requested_stop = True
         self.__publisher.join()
-        self.__client.disconnect()
-        self.__client = None
+        
+        if self.__client.disconnect() == 0:
+            self.__client = None
+            return ERC.SUCCESS
+        else:
+            return ERC.FAILURE
 
 
-    # docs
+    # seriously?
     # --------------------------------------------------------------------------
     def is_active(self) -> bool:
         return self.__client.is_connected()
@@ -113,23 +126,25 @@ class MQTT_Output_Plugin:
     # Publishes queued messages to a broker using a client at a configured topic. 
     # It waits for outbound messages of type Message in an internal buffer queue,
     # sends a copy to the broker, pops the original message from the queue after
-    # a successful publish
+    # a successful publish to all the specified topics
     # --------------------------------------------------------------------------
     def __publish_job(self):
         while not self.__is_requested_stop:
             try: 
-                message = self.__buffer.peek("outbox", timeout_s = 5)
-                if isinstance(message, _MQTTMessage_):
-                    publish_status = 0
-                    for pub_config in self.__config.get_publish_topics():
-                        message.topic = pub_config["topic"]
-                        message.qos   = pub_config["qos"]
-                        message.mid   = pub_config["mid"]
-                        message.retain= pub_config["retain"]
-                        publish_status += self.__client.publish(message)        # aggregate all the publish responses
+                mqitem = self.__buffer.peek("outbox", timeout_s = 5)
+                if mqitem is not None:
+                    message = mqitem.get_value()
+                    if isinstance(message, _MQTTMessage_):
+                        publish_status = 0
+                        for pub_config in self.__config.get_publish_topics():
+                            message.topic = pub_config["topic"]
+                            message.qos   = pub_config["qos"]
+                            message.mid   = pub_config["mid"]
+                            message.retain= pub_config["retain"]
+                            publish_status += self.__client.publish(message)        # aggregate all the publish responses
                     
-                    if publish_status == 0:                                     # only pop from outbox if all the publishing is done successfully
-                        self.__buffer.pop("outbox")
+                        if publish_status == 0:                                     # only pop from outbox if all the publishing is done successfully
+                            self.__buffer.pop("outbox")
 
             # TODO : think of removing it since this won't happen most probably
             # when the queue doesn't exist
