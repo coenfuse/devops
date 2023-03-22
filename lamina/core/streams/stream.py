@@ -34,7 +34,7 @@ class Stream:
         self.__inputs = []
         self.__outputs = []
 
-        self.__relay_service = Thread(target = self.__relayer, name = "input_stream_handler")
+        self.__relay_service = Thread(target = self.__relayer, name = "temp_router")
         self.__is_requested_stop = True
 
 
@@ -48,16 +48,16 @@ class Stream:
             inplug_type, inplug_name = input_plugin.split('.')
             inplug = PLUGIN_LUT.get(f"{inplug_type}_in")()
             inplug.configure(
-                client_id = inplug_name, 
+                name = inplug_name, 
                 config = config.get_that_input_config(inplug_type, inplug_name), 
-                on_recv_cb_hndl = lambda data: self.__mq.push("inbox", MQItem(data)))
+                data_handler = lambda data: self.__mq.push("inbox", MQItem(data)))
             self.__inputs.append(inplug)
 
         for output_plugin in config.get_stream_config().get("outputs"):
             outplug_type, outplug_name = output_plugin.split('.')
             outplug = PLUGIN_LUT.get(f"{outplug_type}_out")()
             outplug.configure(
-                client_id = outplug_name,
+                name = outplug_name,
                 config = config.get_that_output_config(outplug_type, outplug_name))
             self.__outputs.append(outplug)
         

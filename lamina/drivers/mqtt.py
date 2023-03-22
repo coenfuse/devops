@@ -45,11 +45,13 @@ class Message:
 # structure allows us to bundle subscription details along with handler callback
 # and pass it around. This is especially helpful while intializing a plugin that
 # uses this client and wishes to add subscriptions with custom handlers at time
-# of configuration
+# of configuration. The tag can be set as a unique ID for any message that is 
+# received on this subscription 
 # ------------------------------------------------------------------------------
 class Subscription:
     qos = 0
     mid = 0
+    tag = ""
     topic = ""
     callback = None
 

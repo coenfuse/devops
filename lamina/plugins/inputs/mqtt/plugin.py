@@ -10,6 +10,7 @@ from time import sleep
 from lamina.plugins.inputs.mqtt.config import Configurator
 
 # module imports
+from lamina.core.buffers.membuff import MQItem
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
@@ -38,18 +39,18 @@ class MQTT_Input_Plugin:
 
 
     # Configure the Plugin
-    # - client_id       : plugin will create a client instance with this name. 
-    #                     The name must be a non-zero string and unique for both
-    #                     broker and for local system.
-    # - config          : config block from global configuration
-    # - on_recv_cb_hndl : A custom message handler that will be invoked whenever
-    #                     a new message is received by the client in this plugin
-    #                     The handler must take in one parameter that will be 
-    #                     receievd message
+    # - name         : plugin will create a client instance with this name. 
+    #                  The name must be a non-zero string and unique for both
+    #                  broker and for local system.
+    # - config       : config block from global configuration
+    # - data_handler : A custom message handler that will be invoked whenever
+    #                  a new message is received by the client in this plugin
+    #                  The handler must take in one parameter that will be 
+    #                  receievd message
     # --------------------------------------------------------------------------
-    def configure(self, client_id: str, config: dict, on_recv_cb_hndl) -> ERC:
-        self.__config = Configurator(config, client_id)    # may raise exception
-        self.__on_recv_cb_hndl = on_recv_cb_hndl
+    def configure(self, name: str, config: dict, data_handler) -> ERC:
+        self.__config = Configurator(config, name)    # may raise exception
+        self.__on_recv_cb_hndl = data_handler
         return ERC.SUCCESS
 
 
@@ -111,7 +112,9 @@ class MQTT_Input_Plugin:
     # --------------------------------------------------------------------------
     def __generic_msg_collector(self, client_ref, userdata, message):
         message = _MQTTMessage_(message)
-        self.__on_recv_cb_hndl(message)
+        # print(f"recv data on {message.topic}")
+        mqitem = MQItem(message)
+        self.__on_recv_cb_hndl(mqitem)
 
         # use the created filter to parse/sanitize the received message
         # then send the data-block to specified callback where something happens

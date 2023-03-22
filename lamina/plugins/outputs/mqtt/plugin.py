@@ -53,11 +53,12 @@ class MQTT_Output_Plugin:
 
 
     # Configure the Plugin
-    # - client_id : plugin will create a client instance with
-    # - config    : config block from global configuration
+    # - name   : used here as client id, plugin will create a client instance
+    #            with this name
+    # - config : config block from global configuration
     # --------------------------------------------------------------------------
-    def configure(self, client_id: str, config: dict) -> ERC:
-        self.__config = Configuration(config, client_id)  # may raise exceptions
+    def configure(self, name: str, config: dict) -> ERC:
+        self.__config = Configuration(config, name)  # may raise exceptions
         return ERC.SUCCESS
 
 
