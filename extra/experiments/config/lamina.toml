@@ -1,0 +1,135 @@
+[global]
+agent_name = ""
+
+log_level = 0
+log_target = [ "all" ]
+log_rotation_size = ""
+log_rotation_time_s = ""
+log_directory = ""
+
+backup_directory = ""
+encrypt_backup = false
+
+
+# documentation
+[[inputs]]
+
+    # documentation
+    [inputs.lameboi]
+    target_type = "http"
+    http_address = "http://localhost:8089"
+    http_reqtype = "GET"
+    http_reqbody = ""
+    http_token = ""
+    poll_rate = "1s"
+    poll_variance = "3s"
+    timeout = "6s"
+    content_type = "json"
+
+    # documentation
+    [inputs.saneboi]
+    target_type = "mqtt"
+    mqtt_address = "http://localhost:1884"
+    mqtt_topic = ""
+    mqtt_qos = 0
+    mqtt_username = ""
+    mqtt_password = ""
+    content_type = "csv"
+
+
+# documentation
+[[filters]]
+
+    # documentation
+    [filters.json_filter_1]
+    content_type = "json"
+    keys = [ "name", "address", "subject > peach", "case : 2" ]
+
+    # documentation
+    [filters.json_filter_2]
+    content_type = "json"
+    keys = [ "name", "address", "case : 3" ]
+
+    # documentation
+    [filters.csv_filter_1]
+    content_type = "csv"
+    keys = [ 0, 1, 2, 3, 6, 9 ]
+
+
+# documentation
+[[processors]]
+# ..
+
+
+# documentation
+[[outputs]]
+
+    # documentation
+    [outputs.gameboi]
+    target_type = "influxdb"
+    influx_address = "http://localhost:8086"
+    influx_org = "curio"
+    influx_bucket = "forensic"
+    influx_username = "admin"
+    influx_password = "admin"
+    influx_token = "214151593201"
+    influx_measurement = "turbo"
+    influx_timestamp = "auto"
+    write_rate = "2s"
+    write_rate_variance = "1s"
+    timeout = "1s"
+
+    # documentation
+    [outputs.painboi]
+    target_type = "influxdb"
+    influx_address = "http://localhost:8086"
+    influx_org = "curio"
+    influx_bucket = "larsenic"
+    influx_username = "admin"
+    influx_password = "admin"
+    influx_token = "214151593201"
+    influx_measurement = "larsen"
+    influx_timestamp = "auto"
+    write_rate = "3s"
+    write_rate_variance = "1s"
+    timeout = "1s"
+
+    # documentation
+    [outputs.gainboi]
+    target_type = "mqtt"
+    mqtt_address = "http://localhost:24512"
+    mqtt_topic = ""
+    mqtt_qos = 0
+    mqtt_username = ""
+    mqtt_password = ""
+    write_rate = "1s"
+    write_rate_variance = "3s"
+    write_timeout = "2s"
+
+
+# documentation
+[[pipelines]]
+
+    # documentation
+    [pipelines.pipe_1]
+    input = "lameboi"
+    filter = "json_filter_1"
+    processor = ""
+    outputs = [ "gameboi", "gainboi" ]
+    isolated = false
+
+    # documentation
+    [pipelines.pipe_2]
+    input = "lameboi"
+    filter = "json_filter_2"
+    processor = ""
+    outputs = [ "painboi" ]
+    isolated = false
+
+    # documenation
+    [pipelines.pipe_3]
+    input = "saneboi"
+    filter = "csv_filter_1"
+    processor = ""
+    outputs = [ "gainboi" ]
+    isolated = true

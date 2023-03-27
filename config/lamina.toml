@@ -1,0 +1,72 @@
+# documentation
+[lamina]
+    instance = "CS31"
+    log.stdout.level = 1
+    log.fileout.level = 0
+    log.fileout.path = 'out/log'
+
+
+# documentation
+[inputs]
+
+    # documentation
+    [inputs.mqtt.local]
+        host.ip = "localhost"
+        host.port = 1883
+        session.clean = true
+        session.timeout_s = 10
+
+        [[inputs.mqtt.local.subs]]
+            topic = "lamina/recva"
+            qos = 0
+            tag = "lma"
+
+        [[inputs.mqtt.local.subs]]
+            topic = "lamina/recvb"
+            qos = 0
+            tag = "lmb"
+
+        [[inputs.mqtt.local.subs]]
+            topic = "lamina/recvc"
+            qos = 0
+            tag = "lmc"
+
+    [inputs.mqtt.hiveb]
+        host.ip = "broker.hivemq.com"
+        host.port = 1883
+        session.clean = true
+        session.timeout_s = 10
+
+        [[inputs.mqtt.hiveb.subs]]
+            topic = "lamina/recva"
+            qos = 0
+            tag = "rma"
+
+
+# documentation
+[outputs]
+
+    # documentation
+    [outputs.mqtt.bambo]
+        host.ip = "localhost"
+        host.port = 1883
+        session.clean = true
+        session.timeout_s = 10
+
+        [[outputs.mqtt.bambo.pubs]]
+            topic = "lamina/senda"
+            qos = 0
+            mid = 0
+            retain = true
+
+        [[outputs.mqtt.bambo.pubs]]
+            topic = "lamina/sendb"
+            qos = 0
+            mid = 0
+            retain = false
+
+
+# documentation
+[stream]
+    inputs = ["mqtt.local", "mqtt.hiveb"]
+    outputs = ["mqtt.bambo"]
