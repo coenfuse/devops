@@ -31,17 +31,17 @@ VERS = ''
 
 # pkg var metadata
 # ------------------------------------------------------------------------------
-__VER_MAJOR = 0
-__VER_MINOR = 'P'
-__VER_PATCH = 0
-__VER_BUILD = 1
+__MAJOR = 0
+__MINOR = 1
+__PATCH = 0
+__BUILD = 1
 
-__IS_PRE_RELEASE = False
-__PRE_RELEASE_BUILD = 0
+__IN_BETA = True
+__BETA_BUILD = 1
 
-if __IS_PRE_RELEASE:
-    VERS = f'{__VER_MAJOR}.{__VER_MINOR}b-{__PRE_RELEASE_BUILD} (Build {__VER_BUILD})'
+if __IN_BETA:
+    VERS = f'{__MAJOR}.{__MINOR}b-{__BETA_BUILD}'
 else:
-    VERS = f'{__VER_MAJOR}.{__VER_MINOR}.{__VER_PATCH} (Build {__VER_BUILD})'
+    VERS = f'{__MAJOR}.{__MINOR}.{__PATCH}.{__BUILD}'
 
 # DESCRIPTION = f'{NAME} v{VERS} by {AUTH} {SPAN} is {INFO}'
