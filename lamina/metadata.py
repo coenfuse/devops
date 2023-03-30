@@ -34,9 +34,9 @@ VERS = ''
 __MAJOR = 0
 __MINOR = 1
 __PATCH = 0
-__BUILD = 1
+__BUILD = 2
 
-__IN_BETA = True
+__IN_BETA = False
 __BETA_BUILD = 1
 
 if __IN_BETA:

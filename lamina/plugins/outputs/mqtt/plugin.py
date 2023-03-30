@@ -80,7 +80,9 @@ class MQTT_Output_Plugin:
             res = self.__client.connect(
                 host = self.__config.get_host(),
                 port = self.__config.get_port(),
-                keep_alive_s = self.__config.get_keep_alive_s())
+                keep_alive_s = self.__config.get_keep_alive_s(),
+                reconnect_on_fail = self.__config.get_is_reconnect_enabled(),
+                reconnect_timeout_s = self.__config.get_reconnect_timeout_s())
             status = ERC.SUCCESS if res == 0 else ERC.FAILURE
 
         if status == ERC.SUCCESS:

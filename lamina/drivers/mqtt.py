@@ -4,6 +4,7 @@
 
 # standard imports
 from enum import Enum
+from threading import Thread
 from time import sleep
 
 # internal imports
@@ -90,7 +91,7 @@ class MQTTClient:
     # --------------------------------------------------------------------------
     def __init__(self, 
             client_id: str, 
-            clean_session: bool, 
+            clean_session: bool,
             silent: bool = True
         ):
         self.__NAME  = "DRIVER - MQTT"
@@ -110,6 +111,8 @@ class MQTTClient:
         self.__agent.on_unsubscribe = self.__cb_on_unsubscribe
         self.__agent.on_publish = self.__cb_on_publish
 
+        self.__can_reconn_on_fail = False
+
 
     # The method attempts to connect to a MQTT broker with the given host, port,
     # and keep-alive time. It first checks if there is an existing connection, 
@@ -118,7 +121,12 @@ class MQTTClient:
     # to receive incoming messages. It returns the connection status as an 
     # integer value.
     # --------------------------------------------------------------------------
-    def connect(self, host: str, port: int, keep_alive_s: int) -> int:
+    def connect(self, 
+            host: str, 
+            port: int, 
+            keep_alive_s: int, 
+            reconnect_on_fail: bool = False, 
+            reconnect_timeout_s: int = 10) -> int:
         status = self.ERC.SUCCESS
         
         if self.is_connected():
@@ -129,18 +137,31 @@ class MQTTClient:
                 typing.is_str(host, f"mqtt.{self.__id}.host", "and must be a non-zero length string")
                 typing.is_int(port, f"mqtt.{self.__id}.port", "and must be a non-zero positive integer")
                 typing.is_int(keep_alive_s, f"mqtt.{self.__id}.keep_alive_s", "and must be a non-zero positive integer")
-            
+                typing.is_bool(reconnect_on_fail, f"mqtt.{self.__id}.reconnect_on_fail", "and must be a boolean")
+                typing.is_int(reconnect_timeout_s, f"mqtt.{self.__id}.reconnect_timeout_s", "and must be a positive integer")
+
             except Exception as e:
                 stdlog.error(f"{self.__NAME} : [{self.__id}] exception -> {e}")
                 status = self.ERC.EXCEPTION
 
         if status == self.ERC.SUCCESS:
-            if self.__agent.connect(host, port, keep_alive_s) != 0:
-                status = self.ERC.FAILURE
+            try:
+                if self.__agent.connect(host, port, keep_alive_s) != 0:
+                    status = self.ERC.FAILURE
+            except Exception as e:
+                stdlog.error(f"{self.__NAME} : [{self.__id}] exception -> {e}, check your network bruh!")
+                status = self.ERC.NO_CONNECTION
 
         if status == self.ERC.SUCCESS:
             self.__agent.loop_start()
             sleep(0.5)
+
+        if reconnect_on_fail:
+            self.__agent.reconnect_delay_set(
+                min_delay = reconnect_timeout_s,
+                max_delay = reconnect_on_fail + 60)
+            
+            self.__can_reconn_on_fail = reconnect_on_fail
 
         return status.value
 
@@ -229,13 +250,6 @@ class MQTTClient:
     # PRIVATE METHODS
     # **************************************************************************
 
-    # TODO : Implement reconnection logic: In case the MQTT client loses its 
-    # connection to the broker, it's important to have a way to automatically 
-    # reconnect. You could implement a reconnect oop with an exponential backoff
-    # algorithm that gradually increases the delay between each attempt. This 
-    # will reduce the load on the broker and increase the chances of a successful
-    # reconnection.
-
     # the following callback function is invoked whenever the agent is successfully
     # establishes a connection with the broker.
     # - client_ref : reference to client object (need to type cast/hint before use)
@@ -248,6 +262,8 @@ class MQTTClient:
             stdlog.debug(f"{self.__NAME} : [{self.__id}] connected to broker with rc: {rc}")
 
 
+    # FIXME : this callback is called twice during unexpected disconnection
+    #  
     # this callback function is invoked whenever the MQTTClient loses connection
     # or is manually disconnected. The RC is used to decide what type of connect
     # abortion is.
@@ -258,8 +274,9 @@ class MQTTClient:
     def __cb_on_disconnect(self, client_ref, userdata, rc):
         if not self.__is_silent:
             msg = f"{self.__NAME} : [{self.__id}] disconnected from broker with rc: {rc}"
-            stdlog.debug(msg) if rc == 0 else stdlog.error(msg)
-            # TODO : paho_client(client_ref).reconnect()
+            stdlog.debug(msg) if rc == 0 else stdlog.warn(msg)
+            if self.__can_reconn_on_fail:
+                stdlog.debug(f"{self.__NAME} : [{self.__id}] reconnecting ...")
 
 
     # this callback function is invoked whenever the MQTTClient successfully

@@ -49,7 +49,7 @@ class Configuration:
         if "session" not in suspect or not isinstance(suspect["session"], dict):
             raise KeyError(f"Missing 'session' config group in 'outputs.mqtt.{self.get_client_id()}'")
         else:
-            for attr in ["clean", "timeout_s"]:
+            for attr in ["clean", "timeout_s", "reconnect_on_fail", "reconnect_timeout_s"]:
                 if attr not in suspect["session"]:
                    raise KeyError(f"Missing '{attr}' config key in 'mqtt.{self.get_client_id()}.session'")
 
@@ -96,6 +96,16 @@ class Configuration:
     # --------------------------------------------------------------------------
     def get_keep_alive_s(self) -> int:
         return self.__config["session"]["timeout_s"]
+    
+
+    # --------------------------------------------------------------------------
+    def get_is_reconnect_enabled(self) -> bool:
+        return self.__config["session"]["reconnect_on_fail"]
+    
+
+    # --------------------------------------------------------------------------
+    def get_reconnect_timeout_s(self) -> int:
+        return self.__config["session"]["reconnect_timeout_s"]
 
 
     # --------------------------------------------------------------------------
