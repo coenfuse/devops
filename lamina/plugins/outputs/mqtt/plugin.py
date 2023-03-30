@@ -10,7 +10,7 @@ from threading import Thread
 from lamina.plugins.outputs.mqtt.config import Configuration
 
 # module imports
-from lamina.core.buffers.membuff import MemQueue
+from lamina.core.buffers.membuff import MemQueue, MQItem
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
@@ -134,7 +134,7 @@ class MQTT_Output_Plugin:
     def __publish_job(self):
         while not self.__is_requested_stop:
             try: 
-                mqitem = self.__buffer.peek("outbox", timeout_s = 5)
+                mqitem: MQItem = self.__buffer.peek("outbox", timeout_s = 5)
                 if mqitem is not None:
                     message = mqitem.get_value()
                     if isinstance(message, _MQTTMessage_):

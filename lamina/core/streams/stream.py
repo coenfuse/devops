@@ -105,7 +105,7 @@ class Stream:
     def __relayer(self):
           while not self.__is_requested_stop:
             try:
-                item = self.__mq.pop("inbox", timeout_s = 2)
+                item: MQItem = self.__mq.pop("inbox", timeout_s = 2)
                 if item is not None:
                     for output_plug in self.__outputs:
                         output_plug.send(item)
