@@ -50,7 +50,7 @@ class Stream:
             inplug.configure(
                 name = inplug_name, 
                 config = config.get_that_input_config(inplug_type, inplug_name), 
-                data_handler = lambda data: self.__mq.push("inbox", MQItem(data)))
+                data_handler = lambda data: self.__mq.push("inbox", data))
             self.__inputs.append(inplug)
 
         for output_plugin in config.get_stream_config().get("outputs"):

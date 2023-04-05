@@ -274,9 +274,12 @@ class MQTTClient:
     def __cb_on_disconnect(self, client_ref, userdata, rc):
         if not self.__is_silent:
             msg = f"{self.__NAME} : [{self.__id}] disconnected from broker with rc: {rc}"
-            stdlog.debug(msg) if rc == 0 else stdlog.warn(msg)
-            if self.__can_reconn_on_fail:
-                stdlog.debug(f"{self.__NAME} : [{self.__id}] reconnecting ...")
+            if rc == 0:
+                stdlog.debug(msg)
+            else:
+                stdlog.warn(msg)
+                if self.__can_reconn_on_fail:
+                    stdlog.debug(f"{self.__NAME} : [{self.__id}] reconnecting ...")
 
 
     # this callback function is invoked whenever the MQTTClient successfully

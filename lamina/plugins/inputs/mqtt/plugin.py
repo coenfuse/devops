@@ -5,6 +5,8 @@
 
 # standard imports
 from time import sleep
+from typing import Callable
+from typing import Dict
 
 # internal imports
 from lamina.plugins.inputs.mqtt.config import Configurator
@@ -38,7 +40,15 @@ class MQTT_Input_Plugin:
         self.__client: _MQTTDriver_ = None
 
 
-    # Configure the Plugin
+    # Configure the MQTT Input plugin, parses and sets up the internal config
+    # object, assigns a custom message handler that must return no value and take
+    # in a MQItem object as parameter. This function also creates a basic tag_map
+    # that provides a simple topic -> tag binding for payload received from a
+    # particular topic.
+    # It can be said that the topic itself can be a candidate for a message ID
+    # but that'll limit us to topic names in the future  if we want to add func-
+    # tionality for regex tags or dynamically computed tags
+    #
     # - name         : plugin will create a client instance with this name. 
     #                  The name must be a non-zero string and unique for both
     #                  broker and for local system.
@@ -48,9 +58,12 @@ class MQTT_Input_Plugin:
     #                  The handler must take in one parameter that will be 
     #                  receievd message
     # --------------------------------------------------------------------------
-    def configure(self, name: str, config: dict, data_handler) -> ERC:
+    def configure(self, name: str, config: dict, data_handler: Callable[[MQItem], None]) -> ERC:
         self.__config = Configurator(config, name)    # may raise exception
         self.__on_recv_cb_hndl = data_handler
+        self.__tag_map: Dict[str, str] = {}
+        for each_sub in self.__config.get_subscriptions():
+            self.__tag_map[each_sub.topic] = each_sub.tag
         return ERC.SUCCESS
 
 
@@ -114,8 +127,8 @@ class MQTT_Input_Plugin:
     # --------------------------------------------------------------------------
     def __generic_msg_collector(self, client_ref, userdata, message):
         message = _MQTTMessage_(message)
-        # print(f"recv data on {message.topic}")
         mqitem = MQItem(message)
+        mqitem.set_tag(self.__tag_map[message.topic])
         self.__on_recv_cb_hndl(mqitem)
 
         # use the created filter to parse/sanitize the received message

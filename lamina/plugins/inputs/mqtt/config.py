@@ -66,7 +66,7 @@ class Configurator:
                 sub_obj = Subscription()
                 try:
                     sub_obj.qos = sub["qos"]
-                    # sub_obj.tag = sub["tag"]
+                    sub_obj.tag = sub["tag"]
                     sub_obj.topic = sub["topic"]
                 except Exception as e:
                     raise KeyError(f"Missing key: '{e}' in subscription item: {sub_index} in config: inputs.mqtt.{self.get_client_id()}")

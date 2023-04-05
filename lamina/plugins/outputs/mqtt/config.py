@@ -64,8 +64,8 @@ class Configuration:
                 try:
                     pub["topic"]
                     pub["qos"]
-                    pub["mid"]
                     pub["retain"]
+                    pub["tags"]
                 except Exception as e:
                     raise KeyError(f"Missing key: '{e}' in publish config item: {pub_index} in config: outputs.mqtt.{self.get_client_id()}")
                 pub_index = pub_index + 1

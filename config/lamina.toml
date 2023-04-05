@@ -19,20 +19,21 @@
         session.reconnect_timeout_s = 0
 
         [[inputs.mqtt.local.subs]]
-            topic = "lamina/recva"
+            topic = "lamina/recv/a"
             qos = 0
             tag = "lma"
 
         [[inputs.mqtt.local.subs]]
-            topic = "lamina/recvb"
+            topic = "lamina/recv/b"
             qos = 0
             tag = "lmb"
 
         [[inputs.mqtt.local.subs]]
-            topic = "lamina/recvc"
+            topic = "lamina/recv/c"
             qos = 0
             tag = "lmc"
 
+    # documentation
     [inputs.mqtt.hiveb]
         host.ip = "broker.hivemq.com"
         host.port = 1883
@@ -42,7 +43,7 @@
         session.reconnect_timeout_s = 2
 
         [[inputs.mqtt.hiveb.subs]]
-            topic = "lamina/recva"
+            topic = "lamina/recv/a"
             qos = 0
             tag = "rma"
 
@@ -56,23 +57,29 @@
         host.port = 1883
         session.clean = true
         session.timeout_s = 10
-        session.reconnect_on_fail = true
+        session.reconnect_on_fail = false
         session.reconnect_timeout_s = 10
 
         [[outputs.mqtt.bambo.pubs]]
-            topic = "lamina/senda"
+            topic = "lamina/send/a"
             qos = 0
-            mid = 0
             retain = true
+            tags = ["lma", "lmb"]
 
         [[outputs.mqtt.bambo.pubs]]
-            topic = "lamina/sendb"
+            topic = "lamina/send/b"
             qos = 0
-            mid = 0
             retain = false
+            tags = ["lmc", "rma"]
+
+        [[outputs.mqtt.bambo.pubs]]
+            topic = "lamina/send/all"
+            qos = 0
+            retain = false
+            tags = []
 
 
 # documentation
 [stream]
     inputs = ["mqtt.local", "mqtt.hiveb"]
-    outputs = ["mqtt.bambo"]
+    outputs = ["mqtt.bambo", "mqtt.tango"]

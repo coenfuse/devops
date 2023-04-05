@@ -5,6 +5,7 @@
 
 # standard imports
 from threading import Thread
+from typing import Dict
 
 # internal imports
 from lamina.plugins.outputs.mqtt.config import Configuration
@@ -59,6 +60,9 @@ class MQTT_Output_Plugin:
     # --------------------------------------------------------------------------
     def configure(self, name: str, config: dict) -> ERC:
         self.__config = Configuration(config, name)  # may raise exceptions
+        self.__tag_maps: Dict[str, str] = {}
+        for each_pub in self.__config.get_publish_topics():
+            self.__tag_maps[each_pub["topic"]] = each_pub["tags"]
         return ERC.SUCCESS
 
 
@@ -126,36 +130,43 @@ class MQTT_Output_Plugin:
     # TODO : Add facility for supporting failed messages, that are saved in 
     # separate buffer (file maybe?)
 
-    # Publishes queued messages to a broker using a client at a configured topic. 
-    # It waits for outbound messages of type Message in an internal buffer queue,
-    # sends a copy to the broker, pops the original message from the queue after
-    # a successful publish to all the specified topics
+    # Publishes enqueued msgs to the broker using client at configured topics. A
+    # message is only published to a topic if its tag is mentioned in publishing
+    # topics
+    # 
+    # This service waits for outbound messages to arrive in the internal queue,
+    # the waiting is finite and throws a timeout every 5 seconds if no message is
+    # received. This timeout is handled silently and is required to ensure smooth
+    # termination of this process and Lamina itself. 
+    # Once an outbound packet is received in the buffer the process pulls a copy
+    # of it using peek(). The plugin then 'tries' to publish the outbound packet
+    # to all the topics atleast once (given the tag of outbound packet is in
+    # publishing topic's allowed tags list) using specified qos and retention. 
     # --------------------------------------------------------------------------
     def __publish_job(self):
         while not self.__is_requested_stop:
             try: 
-                mqitem: MQItem = self.__buffer.peek("outbox", timeout_s = 5)
-                if mqitem is not None:
-                    message = mqitem.get_value()
-                    if isinstance(message, _MQTTMessage_):
-                        publish_status = 0
-                        for pub_config in self.__config.get_publish_topics():
-                            message.topic = pub_config["topic"]
-                            message.qos   = pub_config["qos"]
-                            message.mid   = pub_config["mid"]
-                            message.retain= pub_config["retain"]
-                            publish_status += self.__client.publish(message)        # aggregate all the publish responses
-                    
-                        if publish_status == 0:                                     # only pop from outbox if all the publishing is done successfully
-                            self.__buffer.pop("outbox")
+                mqitem: MQItem = self.__buffer.peek("outbox", timeout_s = 5)    
 
-            # TODO : think of removing it since this won't happen most probably
-            # when the queue doesn't exist
-            except KeyError as e:
-                stdlog.critical(f"{self.__CNAME} : buffer queue does not exist")
+                if mqitem is not None:                                          
+                    message: _MQTTMessage_ = mqitem.get_value()                 
+                    if isinstance(message, _MQTTMessage_):                      
+
+                        for pub_conf in self.__config.get_publish_topics():     
+                            if (mqitem.get_tag() in pub_conf["tags"]) or (len(pub_conf["tags"]) == 0):            
+                                message.topic  = pub_conf["topic"]
+                                message.qos    = pub_conf["qos"]                            
+                                message.retain = pub_conf["retain"]             
+                                self.__client.publish(message) 
+
+                        self.__buffer.pop("outbox") 
             
             # Index error will only be raised when the queue is empty
             # No logging required, will be raised after every timeout_s expiration
+            # We are not logging any messages here since we want to silently
+            # handle this timeout exception since a definite timeout_s in peek()
+            # gives us an option of shutting down this publish job gracefully
+            # without halting Lamina
             except IndexError as e:
                 pass
 
