@@ -148,18 +148,17 @@ class MQTT_Output_Plugin:
             try: 
                 mqitem: MQItem = self.__buffer.peek("outbox", timeout_s = 5)    
 
-                if mqitem is not None:                                          
-                    message: _MQTTMessage_ = mqitem.get_value()                 
-                    if isinstance(message, _MQTTMessage_):                      
+                if mqitem is not None:
+                    message = _MQTTMessage_()                                          
+                    message.payload = mqitem.get_value()       
+                    for pub_conf in self.__config.get_publish_topics():     
+                        if (mqitem.get_tag() in pub_conf["tags"]) or (len(pub_conf["tags"]) == 0):            
+                            message.topic  = pub_conf["topic"]
+                            message.qos    = pub_conf["qos"]                            
+                            message.retain = pub_conf["retain"]             
+                            self.__client.publish(message) 
 
-                        for pub_conf in self.__config.get_publish_topics():     
-                            if (mqitem.get_tag() in pub_conf["tags"]) or (len(pub_conf["tags"]) == 0):            
-                                message.topic  = pub_conf["topic"]
-                                message.qos    = pub_conf["qos"]                            
-                                message.retain = pub_conf["retain"]             
-                                self.__client.publish(message) 
-
-                        self.__buffer.pop("outbox") 
+                    self.__buffer.pop("outbox") 
             
             # Index error will only be raised when the queue is empty
             # No logging required, will be raised after every timeout_s expiration

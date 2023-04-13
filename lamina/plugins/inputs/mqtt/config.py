@@ -43,7 +43,7 @@ class Configurator:
         else:
             for attr in ["ip", "port"]:
                if attr not in suspect["host"]:
-                   raise KeyError(f"Missing '{attr}' config key in 'mqtt.{self.get_client_id()}.host'")
+                   raise KeyError(f"Missing '{attr}' config key in 'inputs.mqtt.{self.get_client_id()}.host'")
 
         # inspect session config keys
         if "session" not in suspect or not isinstance(suspect["session"], dict):
@@ -52,7 +52,7 @@ class Configurator:
             for attr in [
                 "clean", "timeout_s", "reconnect_on_fail", "reconnect_timeout_s"]:
                 if attr not in suspect["session"]:
-                   raise KeyError(f"Missing '{attr}' config key in 'mqtt.{self.get_client_id()}.session'")
+                   raise KeyError(f"Missing '{attr}' config key in 'inputs.mqtt.{self.get_client_id()}.session'")
 
         # inspect subscriptions config
         if "subs" not in suspect or not isinstance(suspect["subs"], list):

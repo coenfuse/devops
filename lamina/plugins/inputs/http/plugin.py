@@ -1,0 +1,146 @@
+# description about this module in 50 words ...
+
+# standard imports
+import logging
+from random import uniform
+from threading import Thread
+from time import sleep
+from typing import Callable, Union
+
+# internal imports
+from lamina.plugins.inputs.http.config import Configuration
+
+# module imports
+from lamina.core.buffers.membuff import MQItem
+from lamina.utils.error import ERC
+from lamina.utils import stdlog
+
+# thirdparty import
+import requests as http
+
+
+
+# ==============================================================================
+# Loren ipsum color dotor signet
+# ==============================================================================
+class HTTP_Input_Plugin:
+    
+    # docs
+    # --------------------------------------------------------------------------
+    def __init__(self):
+        self.__CNAME = "INPLUG - HTTP"
+        self.__http: http = None
+        self.__poller: Thread = None
+        self.__is_polling: bool = False
+
+    # docs
+    # --------------------------------------------------------------------------
+    def configure(self, name: str, config: dict, data_handler: Callable[[MQItem], None]) -> ERC:
+        self.__config = Configuration(config, name)        # may raise exception
+        
+        self.__CNAME = f"{self.__CNAME} : [{self.__config.get_client_id()}]"
+        self.__data_handler = data_handler
+        self.__poller = Thread(
+            target = self.__poll_data, 
+            name = f"http.{self.__config.get_client_id()}.poller")
+        
+        logger = logging.getLogger("urllib3")
+        logger.setLevel(logging.ERROR)
+        return ERC.SUCCESS
+    
+    # docs
+    # --------------------------------------------------------------------------
+    def start(self) -> ERC:
+        stdlog.info(f"{self.__CNAME} running")
+        self.__poller.start()
+        return ERC.SUCCESS if self.__poller.is_alive() else ERC.FAILURE
+
+    # docs
+    # --------------------------------------------------------------------------
+    def stop(self) -> ERC:
+        self.__is_polling = False
+        stdlog.info(f"{self.__CNAME} stopping")
+        self.__poller.join()
+        return ERC.SUCCESS
+
+    # docs
+    # --------------------------------------------------------------------------
+    def is_running(self):
+        return self.__is_polling
+    
+    # docs
+    # --------------------------------------------------------------------------
+    def __poll_data(self):
+
+        # utility vars (use nonlocal to modify these in nested functions)
+        config = self.__config
+        poll_fail = 0
+        prev_data = ""
+
+        # utility functions
+        def make_request() -> Union[http.Response, None]:
+            try:
+                response: http.Response = http.request(
+                    url = config.url(), 
+                    data = config.data(), 
+                    method = config.method(), 
+                    params = config.params(), 
+                    headers = config.headers(), 
+                    timeout = config.timeout_s())
+                return response.status_code, response
+
+            except Exception as e:
+                stdlog.error(f"{self.__CNAME} error '{e}' while making HTTP request")
+                nonlocal poll_fail
+                poll_fail = poll_fail + 1
+                return None, None
+        
+        def process_failed_status(res: http.Response):
+            stdlog.warn(f"{self.__CNAME} request failed with HTTP code {status} {response.reason}")
+            nonlocal poll_fail
+            poll_fail = poll_fail + 1
+
+        def get_content(res: http.Response) -> Union[str, None]:
+            nonlocal prev_data
+            new_data = decode_content(res)
+            if config.allow_duplicates() or prev_data != new_data:
+                if len(new_data) <= config.max_content_size():
+                    prev_data = new_data
+                    return new_data
+                else:
+                    stdlog.warn(f"{self.__CNAME} response dumped! content length = {len(new_data)} exceeds specified limit of {config.max_content_size()}")
+                    return None
+
+        def decode_content(res: http.Response) -> str:
+            if config.content_decoder() == "auto": return res.text
+            elif config.content_decoder() == "raw": return res.content
+            else: return res.content.decode(config.content_decoder())
+        
+        def get_sleep_time() -> int:
+            return config.poll_rate_s() + uniform(
+                -1 * config.poll_variance_s(), config.poll_variance_s())
+        
+        # we do not require to use nonlocal to access self.<variable> since instance
+        # variables can be accessed / modified inside nested functions just fine
+        def can_poll() -> bool:
+            if self.__is_polling:
+                if poll_fail > config.max_poll_attempts():
+                    stdlog.warn(f"{self.__CNAME} polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
+                    self.__is_polling = False
+            return self.__is_polling
+
+        # Actual poller. We kickstart the poller for first iteration by setting
+        # is_polling flag as true
+        self.__is_polling = True
+        while can_poll():
+            status, response = make_request()
+            if status in config.success_codes():
+                content = get_content(response)
+                if content is not None:
+                    self.__data_handler(MQItem(content, config.tag()))
+            else:
+                process_failed_status(response)
+
+            # we sleep irrespective of request status because we do not want
+            # numb the server with inifinte requests if we fail
+            sleep(get_sleep_time())

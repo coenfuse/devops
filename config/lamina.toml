@@ -47,6 +47,28 @@
             qos = 0
             tag = "rma"
 
+    # documentation
+    [inputs.http.bimbo]
+        host.url = "https://httpbin.org/uuid"
+
+        # OPTIONAL request parameters
+        req.method = "GET"
+        req.headers = {"accept" = "application/json"}
+        req.params = {}
+        req.data = ""
+        req.file = ".vscode/launch.json"
+        req.timeout_s = 4
+
+        res.success = [200]
+        res.content.allow_duplicates = false
+        res.content.decoding = "utf-8"          # auto, raw, custom
+        res.content.tag = "rha"
+        res.content.max_size_bytes = 10000
+
+        poll.rate_s = 5
+        poll.variance_s = 2
+        poll.max_attempt = 10
+
 
 # documentation
 [outputs]
@@ -64,13 +86,13 @@
             topic = "lamina/send/a"
             qos = 0
             retain = true
-            tags = ["lma", "lmb"]
+            tags = ["lma", "lmb", "lmc"]
 
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/send/b"
             qos = 0
             retain = false
-            tags = ["lmc", "rma"]
+            tags = ["rma", "rha"]
 
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/send/all"
@@ -81,5 +103,5 @@
 
 # documentation
 [stream]
-    inputs = ["mqtt.local", "mqtt.hiveb"]
-    outputs = ["mqtt.bambo", "mqtt.tango"]
+    inputs = ["http.bimbo"]
+    outputs = ["mqtt.bambo"]
