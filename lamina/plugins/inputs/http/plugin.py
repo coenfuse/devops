@@ -1,7 +1,6 @@
 # description about this module in 50 words ...
 
 # standard imports
-import logging
 from random import uniform
 from threading import Thread
 from time import sleep
@@ -9,11 +8,11 @@ from typing import Callable, Union
 
 # internal imports
 from lamina.plugins.inputs.http.config import Configuration
+from lamina.plugins.inputs.http.logger import HTTPLog as stdlog
 
 # module imports
 from lamina.core.buffers.membuff import MQItem
 from lamina.utils.error import ERC
-from lamina.utils import stdlog
 
 # thirdparty import
 import requests as http
@@ -28,30 +27,36 @@ class HTTP_Input_Plugin:
     # docs
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__CNAME = "INPLUG - HTTP"
-        self.__http: http = None
         self.__poller: Thread = None
         self.__is_polling: bool = False
+        
+        # DIRTY PATCH (Turning off 'urllib3' and 'requests' logger)
+        import logging
+        logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+        logging.getLogger('requets').setLevel(logging.CRITICAL)
+
 
     # docs
     # --------------------------------------------------------------------------
     def configure(self, name: str, config: dict, data_handler: Callable[[MQItem], None]) -> ERC:
         self.__config = Configuration(config, name)        # may raise exception
-        
-        self.__CNAME = f"{self.__CNAME} : [{self.__config.get_client_id()}]"
+
         self.__data_handler = data_handler
         self.__poller = Thread(
             target = self.__poll_data, 
             name = f"http.{self.__config.get_client_id()}.poller")
         
-        logger = logging.getLogger("urllib3")
-        logger.setLevel(logging.ERROR)
+        if self.__config.is_logging_enabled():
+            stdlog.configure(
+                tag = f"INPUT  : [http.{self.__config.get_client_id()}]",
+                level = self.__config.logging_level())
+
         return ERC.SUCCESS
     
     # docs
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
-        stdlog.info(f"{self.__CNAME} running")
+        stdlog.info("running")
         self.__poller.start()
         return ERC.SUCCESS if self.__poller.is_alive() else ERC.FAILURE
 
@@ -59,7 +64,7 @@ class HTTP_Input_Plugin:
     # --------------------------------------------------------------------------
     def stop(self) -> ERC:
         self.__is_polling = False
-        stdlog.info(f"{self.__CNAME} stopping")
+        stdlog.info("stopping")
         self.__poller.join()
         return ERC.SUCCESS
 
@@ -90,13 +95,13 @@ class HTTP_Input_Plugin:
                 return response.status_code, response
 
             except Exception as e:
-                stdlog.error(f"{self.__CNAME} error '{e}' while making HTTP request")
+                stdlog.error(f"error '{e}' while making HTTP request")
                 nonlocal poll_fail
                 poll_fail = poll_fail + 1
                 return None, None
         
         def process_failed_status(res: http.Response):
-            stdlog.warn(f"{self.__CNAME} request failed with HTTP code {status} {response.reason}")
+            stdlog.warn(f"request failed with HTTP code {status} {res.reason}")
             nonlocal poll_fail
             poll_fail = poll_fail + 1
 
@@ -108,7 +113,7 @@ class HTTP_Input_Plugin:
                     prev_data = new_data
                     return new_data
                 else:
-                    stdlog.warn(f"{self.__CNAME} response dumped! content length = {len(new_data)} exceeds specified limit of {config.max_content_size()}")
+                    stdlog.warn(f"response dumped! content length = {len(new_data)} exceeds specified limit of {config.max_content_size()}")
                     return None
 
         def decode_content(res: http.Response) -> str:
@@ -125,7 +130,7 @@ class HTTP_Input_Plugin:
         def can_poll() -> bool:
             if self.__is_polling:
                 if poll_fail > config.max_poll_attempts():
-                    stdlog.warn(f"{self.__CNAME} polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
+                    stdlog.warn(f"polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
                     self.__is_polling = False
             return self.__is_polling
 
@@ -138,7 +143,7 @@ class HTTP_Input_Plugin:
                 content = get_content(response)
                 if content is not None:
                     self.__data_handler(MQItem(content, config.tag()))
-            else:
+            elif response is not None:
                 process_failed_status(response)
 
             # we sleep irrespective of request status because we do not want

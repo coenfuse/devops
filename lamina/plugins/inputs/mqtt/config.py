@@ -74,6 +74,15 @@ class Configurator:
                 sub_index = sub_index + 1
             suspect["subs"] = subs_list
 
+        # inspect logging config keys [OPTIONAL]
+        if "log" in suspect:
+            if not isinstance(suspect["log"], dict):
+                raise ValueError(f"Invalid 'log' attribute structure in 'inputs.mqtt.{self.get_client_id()}'")
+            else:
+                for attr in ["level"]:
+                    if attr not in suspect["log"]:
+                        raise KeyError(f"Missing '{attr}' config key in 'inputs.mqtt.{self.get_client_id()}.log'")
+
         # .. add more inspection units (if necessary)
 
 
@@ -115,3 +124,13 @@ class Configurator:
     # --------------------------------------------------------------------------
     def get_subscriptions(self) -> List[Subscription]:
         return self.__config["subs"]
+    
+
+    # --------------------------------------------------------------------------
+    def is_logging_enabled(self) -> bool:
+        return True if "log" in self.__config else False
+    
+
+    # --------------------------------------------------------------------------
+    def logging_level(self) -> int:
+        return self.__config["log"]["level"]

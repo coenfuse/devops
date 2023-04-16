@@ -11,7 +11,7 @@ from typing import Union       # Use this for return hints as Union[type, type]
 from lamina.utils import typing
 
 # thirdparty imports
-from urllib.parse import urlparse
+# ..
 
 
 # ==============================================================================
@@ -84,6 +84,16 @@ class Configuration:
                 if attr not in suspect["poll"]:
                     raise KeyError(f"Missing '{attr}' config key in 'inputs.http.{self.get_client_id()}.poll'")
 
+        # inspect logging config keys [OPTIONAL]
+        if "log" in suspect:
+            if not isinstance(suspect["log"], dict):
+                raise ValueError(f"Invalid 'log' attribute structure in 'inputs.http.{self.get_client_id()}'")
+            else:
+                for attr in ['level']:
+                    if attr not in suspect["log"]:
+                        raise KeyError(f"Missing '{attr}' config key in 'inputs.http.{self.get_client_id()}.log'")
+
+
         # .. add more inspection units (if necessary)
 
 
@@ -153,7 +163,12 @@ class Configuration:
             if suspect["poll"]["max_attempt"] <= 0:
                 raise ValueError(f"Invalid input.http.{self.get_client_id()}.poll.max_attempt = {suspect['poll']['max_attempt']} specified. Must be a positive non-zero integer.")
 
-
+        # verify log config keys
+        if "log" in suspect:
+            if "level" in suspect["log"]:
+                if typing.is_int(suspect["log"]["level"], f"inputs.http.{self.get_client_id}.log.level", "and must be positive non-zero integer"):
+                    if suspect["log"]["level"] not in range(0,5):
+                        raise ValueError(f"Invalid input.http.{self.get_client_id()}.log.level = {suspect['log']['level']} specified. Must be within 0 to 5.")
 
     # docs
     # --------------------------------------------------------------------------
@@ -250,3 +265,15 @@ class Configuration:
     # --------------------------------------------------------------------------
     def max_poll_attempts(self) -> int:
         return self.__config["poll"]["max_attempt"]
+    
+
+    # docs
+    # --------------------------------------------------------------------------
+    def is_logging_enabled(self) -> bool:
+        return True if "log" in self.__config else False
+    
+
+    # docs
+    # --------------------------------------------------------------------------
+    def logging_level(self) -> int:
+        return self.__config["log"]["level"]

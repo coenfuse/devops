@@ -10,13 +10,13 @@ from typing import Dict
 
 # internal imports
 from lamina.plugins.inputs.mqtt.config import Configurator
+from lamina.plugins.inputs.mqtt.logger import MQTTLog as stdlog
 
 # module imports
 from lamina.core.buffers.membuff import MQItem
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
-from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
@@ -36,8 +36,8 @@ class MQTT_Input_Plugin:
     # MQTTClient object
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__NAME   = "INPLUG - MQTT"
         self.__client: _MQTTDriver_ = None
+        self.__logger = None
 
 
     # Configure the MQTT Input plugin, parses and sets up the internal config
@@ -62,8 +62,16 @@ class MQTT_Input_Plugin:
         self.__config = Configurator(config, name)    # may raise exception
         self.__on_recv_cb_hndl = data_handler
         self.__tag_map: Dict[str, str] = {}
+        
         for each_sub in self.__config.get_subscriptions():
             self.__tag_map[each_sub.topic] = each_sub.tag
+
+        if self.__config.is_logging_enabled():
+            stdlog.configure(
+                tag = f"INPUT  : [mqtt.{self.__config.get_client_id()}]",
+                level = self.__config.logging_level())
+            self.__logger = stdlog.get_logger_name()
+
         return ERC.SUCCESS
 
 
@@ -76,7 +84,7 @@ class MQTT_Input_Plugin:
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(), 
             clean_session = self.__config.get_is_clean_session(), 
-            silent = False)
+            logger = self.__logger)
         
         if self.__client is not None:
             status = ERC.SUCCESS

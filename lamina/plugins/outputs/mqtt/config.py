@@ -70,6 +70,15 @@ class Configuration:
                     raise KeyError(f"Missing key: '{e}' in publish config item: {pub_index} in config: outputs.mqtt.{self.get_client_id()}")
                 pub_index = pub_index + 1
 
+        # inspect logging config keys [OPTIONAL]
+        if "log" in suspect:
+            if not isinstance(suspect["log"], dict):
+                raise ValueError(f"Invalid 'log' attribute structure in 'outputs.mqtt.{self.get_client_id()}'")
+            else:
+                for attr in ["level"]:
+                    if attr not in suspect["log"]:
+                        raise KeyError(f"Missing '{attr}' config key in 'outputs.mqtt.{self.get_client_id()}.log'")
+
         # .. add more inspections units (if necessary)
 
 
@@ -111,3 +120,13 @@ class Configuration:
     # --------------------------------------------------------------------------
     def get_publish_topics(self) -> List[dict]:
         return self.__config["pubs"]
+    
+    
+    # --------------------------------------------------------------------------
+    def is_logging_enabled(self) -> bool:
+        return True if "log" in self.__config else False
+    
+
+    # --------------------------------------------------------------------------
+    def logging_level(self) -> int:
+        return self.__config["log"]["level"]

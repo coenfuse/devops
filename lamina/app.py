@@ -31,7 +31,6 @@ class Lamina:
     # TODO : docs
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__CNAME = "LAMINA  "
         self.__config_file = None
         self.__config: Configurator = None 
         self.__stop_event = threading.Condition()
@@ -50,22 +49,22 @@ class Lamina:
             status = self.__setup_logging()
 
         if status == ERC.SUCCESS:
-            stdlog.info(f"{self.__CNAME} : starting {self.__config.get_app_config()['instance']} v{meta.VERS}")
+            stdlog.info(f"starting {self.__config.get_app_config()['instance']} v{meta.VERS}")
             status = self.__stream.configure(self.__config)
 
         if status == ERC.SUCCESS:
             status = self.__stream.start()
 
         if status == ERC.SUCCESS:
-            stdlog.info(f"{self.__CNAME} : running")
+            stdlog.info(f"running")
             
             with self.__stop_event:
                 self.__stop_event.wait()
 
-            stdlog.info(f"{self.__CNAME} : stopping")
+            stdlog.info(f"stopping")
             status = self.__stream.stop()
 
-        stdlog.info(f"{self.__CNAME} : stopped")
+        stdlog.info(f"stopped")
         return status
 
 
@@ -108,7 +107,7 @@ class Lamina:
         config = self.__config.get_app_config().get("log")
         log_fmt = logging.Formatter(
             datefmt = "%Y-%m-%d %H:%M:%S",
-            fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : %(message)s")
+            fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : LAMINA : %(message)s")
         
         # setup root logger and add custom level
         logging.addLevelName(5, "TRACE")
@@ -124,7 +123,7 @@ class Lamina:
             if level in [0,1,2,3,4,5]:
                 console_handler.setLevel(level * 10)        # log levels are in multiples of 10
             else:
-                print(f"{self.__CNAME} : INVALID stdout.level = {level}. Defaulting to INFO")
+                print(f"LAMINA : INVALID stdout.level = {level}. Defaulting to INFO")
                 console_handler.setLevel(logging.INFO)
 
             root_logger.addHandler(console_handler)
@@ -137,7 +136,7 @@ class Lamina:
             if not os.path.exists(logdir):
                 try: os.makedirs(logdir)
                 except Exception as e:
-                    print(f"{self.__CNAME} : log directory create failure at - {logdir} with error: {e}")
+                    print(f"LAMINA : log directory create failure at - {logdir} with error: {e}")
                     status = ERC.EXCEPTION
 
             file_handler = logging.FileHandler(f'{logdir}/{meta.NAME.lower()}.log')
@@ -151,7 +150,7 @@ class Lamina:
                 case 5: file_handler.setLevel(logging.CRITICAL)
                 case _:
                     file_handler.setLevel(logging.DEBUG)
-                    print(f"{self.__CNAME} : INVALID fileout.level = {loglvl}. Defaulting to DEBUG")
+                    print(f"LAMINA : INVALID fileout.level = {loglvl}. Defaulting to DEBUG")
 
             root_logger.addHandler(file_handler)
 

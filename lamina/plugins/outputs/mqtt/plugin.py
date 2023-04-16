@@ -9,13 +9,14 @@ from typing import Dict
 
 # internal imports
 from lamina.plugins.outputs.mqtt.config import Configuration
+from lamina.plugins.outputs.mqtt.logger import MQTTLog as stdlog
 
 # module imports
 from lamina.core.buffers.membuff import MemQueue, MQItem
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
-from lamina.utils import stdlog
+# from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
@@ -43,8 +44,8 @@ class MQTT_Output_Plugin:
     # out the messages to MQTT broker
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__CNAME   = "OUTPLUG - MQTT"
         self.__client: _MQTTDriver_ = None
+        self.__logger = None
         
         self.__buffer = MemQueue()
         self.__buffer.add_queue("outbox")
@@ -61,8 +62,16 @@ class MQTT_Output_Plugin:
     def configure(self, name: str, config: dict) -> ERC:
         self.__config = Configuration(config, name)  # may raise exceptions
         self.__tag_maps: Dict[str, str] = {}
+        
         for each_pub in self.__config.get_publish_topics():
             self.__tag_maps[each_pub["topic"]] = each_pub["tags"]
+
+        if self.__config.is_logging_enabled():
+            stdlog.configure(
+                tag = f"OUTPUT : [mqtt.{self.__config.get_client_id()}]",
+                level = self.__config.logging_level())
+            self.__logger = stdlog.get_logger_name()
+
         return ERC.SUCCESS
 
 
@@ -75,7 +84,7 @@ class MQTT_Output_Plugin:
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(),
             clean_session = self.__config.get_is_clean_session(),
-            silent = False)
+            logger = self.__logger)
 
         if self.__client is not None:
             status = ERC.SUCCESS        
@@ -171,4 +180,4 @@ class MQTT_Output_Plugin:
 
             # any other exception
             except Exception as e:
-                stdlog.error(f"{self.__CNAME} : {e}")
+                stdlog.error(e)

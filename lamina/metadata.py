@@ -34,10 +34,10 @@ VERS = ''
 __MAJOR = 0
 __MINOR = 1
 __PATCH = 0
-__BUILD = 3
+__BUILD = 136
 
-__IN_BETA = False
-__BETA_BUILD = 1
+__IN_BETA = True
+__BETA_BUILD = 0
 
 if __IN_BETA:
     VERS = f'{__MAJOR}.{__MINOR}b-{__BETA_BUILD}'

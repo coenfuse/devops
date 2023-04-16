@@ -17,6 +17,7 @@
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 0
+        # log.level = 0
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recv/a"
@@ -41,6 +42,7 @@
         session.timeout_s = 10
         session.reconnect_on_fail = true
         session.reconnect_timeout_s = 2
+        # log.level = 0
 
         [[inputs.mqtt.hiveb.subs]]
             topic = "lamina/recv/a"
@@ -69,6 +71,7 @@
         poll.variance_s = 2
         poll.max_attempt = 10
 
+        # log.level = 0
 
 # documentation
 [outputs]
@@ -81,6 +84,7 @@
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 10
+        # log.level = 1
 
         [[outputs.mqtt.bambo.pubs]]
             topic = "lamina/send/a"
@@ -103,5 +107,5 @@
 
 # documentation
 [stream]
-    inputs = ["http.bimbo"]
+    inputs = ["http.bimbo", "mqtt.local", "mqtt.hiveb"]
     outputs = ["mqtt.bambo"]

@@ -66,7 +66,7 @@ def is_str(value, variable, msg = ""):
         return True
     
 
-# docs [https://stackoverflow.com/a/38020041]
+# docs [https://stackoverflow.com/a/38020041] [NOT RELIABLE]
 # ------------------------------------------------------------------------------
 def is_url(value, variable, msg = ""):
     try:

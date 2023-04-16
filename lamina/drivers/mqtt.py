@@ -4,7 +4,6 @@
 
 # standard imports
 from enum import Enum
-from threading import Thread
 from time import sleep
 
 # internal imports
@@ -78,21 +77,63 @@ class MQTTClient:
         EXCEPTION = 3
         NO_CONNECTION = 10
 
+    
+    # Internal logger helper that creates a lean wrapper around stdout usage.
+    # It facilitates in keeping the actual logging calls clean with format as
+    # simple as log(msg)
+    # --------------------------------------------------------------------------
+    class Logger:
+        
+        __logger = None
+
+        @staticmethod
+        def configure(logger_name: str):
+            MQTTClient.Logger.__logger = logger_name
+
+        @staticmethod
+        def trace(msg: str): 
+            if MQTTClient.Logger.__logger is not None:
+                stdlog.trace(msg, MQTTClient.Logger.__logger)
+
+        @staticmethod
+        def debug(msg: str):
+            # print(f"Current logger state is {MQTTClient.Logger.__logger}")
+            if MQTTClient.Logger.__logger is not None:
+                stdlog.debug(msg, MQTTClient.Logger.__logger)
+
+        @staticmethod
+        def info(msg: str):
+            if MQTTClient.Logger.__logger is not None:
+                stdlog.info(msg, MQTTClient.Logger.__logger)
+
+        @staticmethod
+        def warn(msg: str): 
+            stdlog.warn(msg, MQTTClient.Logger.__logger)
+
+        @staticmethod
+        def error(msg: str):
+            if MQTTClient.Logger.__logger is not None:
+                stdlog.error(msg, MQTTClient.Logger.__logger)
+
+        @staticmethod
+        def critical(msg: str):
+            if MQTTClient.Logger.__logger is not None:
+                stdlog.critical(msg, MQTTClient.Logger.__logger)        
+
 
     # TODO : add support for userdata and use in cb_on_connect
     # TODO : Add interface for users to own callbacks for all mqtt events
     # 
     # Basic MQTTClient constructor, pass in the client-id (must be unique for a
-    # broker) and whether you want a clean session with the broker. Pass an 
-    # optional silent parameters that controls whether this client logs its 
-    # runtime information or not. 
+    # broker) and whether you want a clean session with the broker. Pass a 
+    # required logger parameters that is used by driver to print runtime logs. 
     # Not handling exceptions here since ctor can't return values, exceptions
     # are the only logicaly way I see to actually raise errors init errors
     # --------------------------------------------------------------------------
     def __init__(self, 
             client_id: str, 
             clean_session: bool,
-            silent: bool = True
+            logger = None
         ):
         self.__NAME  = "DRIVER - MQTT"
 
@@ -102,8 +143,7 @@ class MQTTClient:
         if typing.is_bool(clean_session, "clean_session"):
             self.__agent = paho_client(client_id, clean_session)
 
-        if typing.is_bool(silent, "silent"):
-            self.__is_silent = silent
+        self.Logger.configure(logger)
 
         self.__agent.on_connect = self.__cb_on_connect
         self.__agent.on_disconnect = self.__cb_on_disconnect
@@ -141,7 +181,7 @@ class MQTTClient:
                 typing.is_int(reconnect_timeout_s, f"mqtt.{self.__id}.reconnect_timeout_s", "and must be a positive integer")
 
             except Exception as e:
-                stdlog.error(f"{self.__NAME} : [{self.__id}] exception -> {e}")
+                self.Logger.error(f"exception -> {e}")
                 status = self.ERC.EXCEPTION
 
         if status == self.ERC.SUCCESS:
@@ -149,7 +189,7 @@ class MQTTClient:
                 if self.__agent.connect(host, port, keep_alive_s) != 0:
                     status = self.ERC.FAILURE
             except Exception as e:
-                stdlog.error(f"{self.__NAME} : [{self.__id}] exception -> {e}, check your network bruh!")
+                self.Logger.error(f"exception -> {e}, check your network bruh!")
                 status = self.ERC.NO_CONNECTION
 
         if status == self.ERC.SUCCESS:
@@ -199,10 +239,11 @@ class MQTTClient:
         if status == self.ERC.SUCCESS:
             try:
                 rc, mid = self.__agent.subscribe(req.topic, req.qos)
-                stdlog.trace(f"{self.__NAME} : [{self.__id}] subscribe request sent with mid: {mid} for topic: {req.topic}, qos: {req.qos}")
+                self.Logger.trace(f"subscribe request sent with mid: {mid} for topic: {req.topic}, qos: {req.qos}")
                 status = self.ERC.FAILURE if rc != 0 else self.ERC.SUCCESS
+            
             except Exception as e:
-                stdlog.error(f"{self.__NAME} : [{self.__id}] exception - {e}, while trying to subscribe to topic: '{req.topic}' & qos: '{req.qos}'")
+                self.Logger.error(f"exception - {e}, while trying to subscribe to topic: '{req.topic}' & qos: '{req.qos}'")
                 status = self.ERC.EXCEPTION
 
         if status == self.ERC.SUCCESS:
@@ -223,7 +264,7 @@ class MQTTClient:
 
         if status == self.ERC.SUCCESS:
             rc, mid = self.__agent.unsubscribe(req.topic)
-            stdlog.trace(f"{self.__NAME} : [{self.__id}] unsubscribe request sent with mid: {mid} for topic: {req.topic}")
+            self.Logger.trace(f"unsubscribe request sent with mid: {mid} for topic: {req.topic}")
             status = self.ERC.FAILURE if rc != 0 else self.ERC.SUCCESS
 
         if status == self.ERC.SUCCESS:
@@ -240,7 +281,7 @@ class MQTTClient:
     def publish(self, msg: Message) -> int:
         if self.is_connected():
             rc, mid = self.__agent.publish(msg.topic, msg.payload, msg.qos, msg.retain)
-            stdlog.trace(f"{self.__NAME} : [{self.__id}] attempting publish on topic: {msg.topic} with qos: {msg.qos} and mid: {mid}")
+            self.Logger.trace(f"attempting publish on topic: {msg.topic} with qos: {msg.qos} and mid: {mid}")
             return self.ERC.WARNING.value if rc != 0 else self.ERC.SUCCESS.value
         else:
             return self.ERC.NO_CONNECTION.value
@@ -258,8 +299,7 @@ class MQTTClient:
     # - rc         : connection reason code (SUCCESS - 0) 
     # --------------------------------------------------------------------------
     def __cb_on_connect(self, client_ref, userdata, flags, rc):
-        if not self.__is_silent:
-            stdlog.debug(f"{self.__NAME} : [{self.__id}] connected to broker with rc: {rc}")
+        self.Logger.debug(f"connected to broker with rc: {rc}")
 
 
     # FIXME : this callback is called twice during unexpected disconnection
@@ -272,30 +312,27 @@ class MQTTClient:
     # - rc         : disconnection reason code (SUCCESS - 0)
     # --------------------------------------------------------------------------
     def __cb_on_disconnect(self, client_ref, userdata, rc):
-        if not self.__is_silent:
-            msg = f"{self.__NAME} : [{self.__id}] disconnected from broker with rc: {rc}"
-            if rc == 0:
-                stdlog.debug(msg)
-            else:
-                stdlog.warn(msg)
-                if self.__can_reconn_on_fail:
-                    stdlog.debug(f"{self.__NAME} : [{self.__id}] reconnecting ...")
+        msg = f"disconnected from broker with rc: {rc}"
+        if rc == 0:
+            self.Logger.debug(msg)
+        else:
+            self.Logger.warn(msg)
+            if self.__can_reconn_on_fail:
+                self.Logger.debug(f"reconnecting ...")
 
 
     # this callback function is invoked whenever the MQTTClient successfully
     # subscribes to a topic on the broker. This callback just logs SUBACK prompt.
     # --------------------------------------------------------------------------
     def __cb_on_subscribe(self, client, userdata, mid, granted_qos):
-        if not self.__is_silent:
-            stdlog.debug(f"{self.__NAME} : [{self.__id}] subscribe SUCCESS with mid: {mid} and granted qos: {granted_qos[0]}")
+        self.Logger.debug(f"subscribe SUCCESS with mid: {mid} and granted qos: {granted_qos[0]}")
 
 
     # this callback function is invoked whenever the MQTTClient successfully
     # unsubscribes from a topic on the broker. Basically a UNSUBACK prompt.
     # --------------------------------------------------------------------------
     def __cb_on_unsubscribe(self, client, userdata, mid):
-        if not self.__is_silent:
-            stdlog.debug(f"{self.__NAME} : [{self.__id}] unsubscribe SUCCESS with mid: {mid}")
+        self.Logger.debug(f"unsubscribe SUCCESS with mid: {mid}")
 
 
     # this callback function is invoked whenever the client successfully publishes
@@ -303,12 +340,10 @@ class MQTTClient:
     # that can be used for cross-verification
     # --------------------------------------------------------------------------
     def __cb_on_publish(self, client, userdata, mid):
-        if not self.__is_silent:
-            stdlog.trace(f"{self.__NAME} : [{self.__id}] publish SUCCESS with mid: {mid}")
+        self.Logger.trace(f"publish SUCCESS with mid: {mid}")
 
 
     # docs
     # --------------------------------------------------------------------------
     # def __cb_on_receive(self, client, userdata, msg: Message):
-    #    if not self.__is_silent:
-    #        stdlog.trace(f"{self.__NAME} : {self.__id} received message, topic - {msg.topic}, qos - {msg.qos}, payload - {msg.payload}")
+    #     self.Logger.trace(f"received message, topic - {msg.topic}, qos - {msg.qos}, payload - {msg.payload}")
