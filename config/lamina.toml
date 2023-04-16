@@ -1,15 +1,48 @@
-# documentation
+# TOML based configuration for LAMINA v0.1
+# ------------------------------------------------------------------------------
+
+# Application level config
 [lamina]
+
+    # [OPTIONAL] Name of the Lamina instance
+    # - This is helpful when you want to monitor several concurrent running 
+    # instances of Lamina from terminal
+    # - Or if you are experimenting with different configuration files, this can
+    # help the user differ in what config is currently active
     instance = "CS31"
+    
+    # [OPTIONAL] Logging configuration for Lamina. 
+    # Lamina can write its runtime to two seperate streams simultaneously. 
+    # stdout  - log to terminal or standard output
+    # fileout - log to a file
+    # Both logging streams are optional and can be configured for different level
+    # of verbosity. This is particularly helpful for admins who want to keep the
+    # stdout concise with higher logging level but may want to dump trace logs
+    # to a file for later analysis.
+    # Here we setup the root logger for Lamina application, if the root-logger
+    # is not set, no child loggers (for input / output plugins) would work either.
+    # The following is the list of valid log levels:
+    # 0 - TRACE     [MOST DETAILED]
+    # 1 - DEBUG
+    # 2 - INFO
+    # 3 - WARN
+    # 4 - ERROR
+    # 5 - CRITICAL  [MOST CONCISE]
     log.stdout.level = 1
     log.fileout.level = 0
     log.fileout.path = 'out/log'
 
 
-# documentation
+
+# Define and configure all the input plugins that you may want to use in this 
+# Lamina instance here. Each input plugin will have a same naming init scheme that
+# is, group.type.name. So, for example 'inputs.mqtt.banana' will create an MQTT 
+# Input plugin who will have a MQTT client name 'banana'.
+# Some plugins may use thier name to establish connection (e.g. MQTT) and some
+# may not (e.g. HTTP) but it is required for any Lamina plugin to have a name
+# since their runtime logs are going to be prefixed with their name only.
 [inputs]
 
-    # documentation
     [inputs.mqtt.local]
         host.ip = "localhost"
         host.port = 1883
@@ -17,7 +50,7 @@
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 0
-        # log.level = 0
+        log.level = 0
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recv/a"
@@ -34,7 +67,7 @@
             qos = 0
             tag = "lmc"
 
-    # documentation
+
     [inputs.mqtt.hiveb]
         host.ip = "broker.hivemq.com"
         host.port = 1883
@@ -42,15 +75,15 @@
         session.timeout_s = 10
         session.reconnect_on_fail = true
         session.reconnect_timeout_s = 2
-        # log.level = 0
+        log.level = 0
 
         [[inputs.mqtt.hiveb.subs]]
             topic = "lamina/recv/a"
             qos = 0
             tag = "rma"
 
-    # documentation
-    [inputs.http.bimbo]
+    
+    [inputs.http.pumba]
         host.url = "https://httpbin.org/uuid"
 
         # OPTIONAL request parameters
@@ -71,41 +104,57 @@
         poll.variance_s = 2
         poll.max_attempt = 10
 
-        # log.level = 0
+        log.level = 0
 
-# documentation
+
+
+# Define and configure all the output plugins that you may want to use in this 
+# Lamina instance here. Each output plugin will have a same naming init scheme that
+# is, group.type.name. So, for example 'outputs.mqtt.kimon' will create an MQTT 
+# output plugin who will have a MQTT client name 'kimon'.
+# Some plugins may use thier name to establish connection (e.g. MQTT) and some
+# may not (e.g. HTTP) but it is required for any Lamina plugin to have a name
+# since their runtime logs are going to be prefixed with their name only.
+# Each output plugin generally has
 [outputs]
 
-    # documentation
-    [outputs.mqtt.bambo]
+    [outputs.mqtt.kimon]
         host.ip = "localhost"
         host.port = 1883
         session.clean = true
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 10
-        # log.level = 1
+        log.level = 1
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/a"
             qos = 0
             retain = true
             tags = ["lma", "lmb", "lmc"]
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/b"
             qos = 0
             retain = false
             tags = ["rma", "rha"]
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/all"
             qos = 0
             retain = false
             tags = []
 
 
-# documentation
+# Define data streaming settings Here you can specify arrays for input and output 
+# plugins respectively. 
+# Each array must have atleast one valid plugin inside of it, however there is 
+# no upper limit given on the plugins specified as long as there is no duplicate.
+# These arrays tell Lamina to what input and output plugins to initialize and
+# use for data collection and dumping. Currently this process is executed in
+# many-to-many fashion, i.e. data from all the inputs will be sent out to all
+# the specified output. However, one can control this data flow with careful
+# usage of tags that are specified as config parameters in the plugins.
 [stream]
-    inputs = ["http.bimbo", "mqtt.local", "mqtt.hiveb"]
-    outputs = ["mqtt.bambo"]
+    inputs = ["mqtt.local", "mqtt.hiveb", "http.pumba"]
+    outputs = ["mqtt.kimon"]

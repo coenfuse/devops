@@ -199,7 +199,7 @@ class MQTTClient:
         if reconnect_on_fail:
             self.__agent.reconnect_delay_set(
                 min_delay = reconnect_timeout_s,
-                max_delay = reconnect_on_fail + 60)
+                max_delay = reconnect_timeout_s + 60)
             
             self.__can_reconn_on_fail = reconnect_on_fail
 
