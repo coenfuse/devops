@@ -29,7 +29,7 @@ from lamina.utils.error import ERC
 # messages on different topics. This class does not provide input buffering or
 # message publishing facility.
 # ==============================================================================
-class MQTT_Input_Plugin:
+class MQTTInputPlugin:
 
     # Simple constructor initializing the name of plugin that will be used in
     # logging and creating an empty client variable that will be later initialzed

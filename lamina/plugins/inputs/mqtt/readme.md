@@ -3,7 +3,7 @@
 - Release Date - 16 April 2023
 - Author - [github.com/coenfuse](www.github.com/coenfuse)
 
-This MQTT Input plugin is a component of the LAMINA data collection application that allows you to collect data from a local or remote MQTT broker. With this plugin, you can subscribe to multiple topics on the broker and receive messages that are then tagged with a specified string. This tagging feature is particularly useful in routing data between different components of your data collection pipeline. The plugin supports multiple subscriptions, and you can specify the quality of service (QoS) for each subscription. Additionally, you can configure the plugin to automatically reconnect to the broker if the connection is lost.
+This MQTT Input plugin is a component of the LAMINA data collection application that allows you to collect data from a local or remote MQTT broker. With this plugin, you can subscribe totopics on the broker and receive messages. Each message that is received from a topic is then specified a configured string tag. This tagging is particularly useful in routing data between different components of your data collection pipeline. Additionally, you can configure the plugin to automatically reconnect to the broker if the connection is lost.
 
 
 ## How to use?
@@ -20,11 +20,6 @@ To use the MQTT input plugin in Lamina, follow these steps:
 
 The following is the full configuration of this plugin in TOML format with complete documentation of each config parameter.
 ```
-# MQTT Input plugin that can connect to a remote or local MQTT broker.
-# Does not perform security checks requires authentication parameters yet.
-# Can subscribe to several topics on the broker and collects messages on
-# those topics which can then be tagged with a specified string. This client
-# also reconnect to the broker if it loses connection with broker unnaturally
 [inputs.mqtt.<name>]
 
     # the hostname or IP address of the remote broker
@@ -35,7 +30,7 @@ The following is the full configuration of this plugin in TOML format with compl
 
     # If True, the broker will remove all information about this client when
     # it disconnects. If False, the client is a persistent client and 
-    # subscription information and queued messages will be retained when the 
+    # subscription information will be retained when the 
     # client disconnects. Note that a client will never discard its own 
     # outgoing messages on disconnect.
     session.clean = true
@@ -51,7 +46,7 @@ The following is the full configuration of this plugin in TOML format with compl
 
     # When connection is lost, the client will initially wait initially for
     # specified timoout and double this time every attempt. The wait is 
-    # capped at max_delay + 60. Once the client is fully connected the wait 
+    # capped at timeout + 60. Once the client is fully connected the wait 
     # timer is reset to specified timeout.
     session.reconnect_timeout_s = 0
         
@@ -60,7 +55,7 @@ The following is the full configuration of this plugin in TOML format with compl
     # This logger will be using the Lamina's root logger and will dump its
     # output to same Stream / File as mentioned in the root logger. The level
     # mentioned here will be used for both File and Stream logging of data.
-    # The logging levels are same as the root logger's
+    # The available logging levels are same as for the root logger's
     # 0 - TRACE     [MOST DETAILED]
     # 1 - DEBUG
     # 2 - INFO
@@ -70,10 +65,9 @@ The following is the full configuration of this plugin in TOML format with compl
     log.level = 0
 
     # Specify the list of subscriptions you want this client to make on the
-    # broker and specify the QOS you want for that subscription. Furthermore,
-    # you must also assign a tag that you wish the client to attach to the 
-    # received message. This tagging is particularly useful in inter/intra 
-    # plugin level data routing
+    # broker. Specify the subscription topic, QOS and Tag. The tag that you wish
+    # the client to attach to the received message will be particularly useful 
+    # in inter/intra plugin level data routing
     [[inputs.mqtt.<name>.subs]]
         topic = "lamina/topic/input/a"
         qos = 0
@@ -90,11 +84,12 @@ The following is the full configuration of this plugin in TOML format with compl
         tag = "mqtc"
 ```
 
-# Change Log
+# Release Notes
 - v1.0 (16th April 2023)
-    - Base version of MQTT collector
-    - Can subscribe to multiple topics and have separate tags for each topics
-    - The client can reconnect on losing connection from the broker
-    - Dedicated and customizable logging handler
-    - Does not support TLS certificates or username authentication before connection
-    - Based on [paho-mqtt](https://pypi.org/project/paho-mqtt/) package for python
+    - Base version of MQTT collector.
+    - Can subscribe to multiple topics and have separate tags for each topics.
+    - The client can reconnect on losing connection from the broker.
+    - Dedicated and customizable logging handler.
+    - Does not support TLS certificates or username authentication before connection.
+    - Does not support input buffering from a subscription or inflow rate control.
+    - Based on [paho-mqtt](https://pypi.org/project/paho-mqtt/) package for python.

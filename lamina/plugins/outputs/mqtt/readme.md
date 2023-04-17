@@ -54,7 +54,7 @@ The following is the full configuration of this plugin in TOML format with compl
     # This logger will be using the Lamina's root logger and will dump its output
     # to same Stream / File as mentioned in the root logger. The level mentioned
     # here will be used for both File and Stream logging of data.
-    # The logging levels are same as the root logger's
+    # The available logging levels are same as for the root logger's
     # 0 - TRACE     [MOST DETAILED]
     # 1 - DEBUG
     # 2 - INFO

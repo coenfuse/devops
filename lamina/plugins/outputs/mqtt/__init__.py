@@ -15,14 +15,14 @@ from lamina.plugins.outputs.mqtt.plugin import MQTTOutputPlugin
 # pkg const metadata
 # ------------------------------------------------------------------------------
 NAME = "MQTT_OUTPLUG"
-INFO = "MQTT publishing plugin with error handling, encoding and rate control"
-AUTH = "github.com/coenfuse"
+INFO = "A component of the LAMINA data collection application that allows you to publish data to a local or remote MQTT broker."
+AUTH = "www.github.com/coenfuse"
 VERS = ""
 # ..
 
 # pkg var metadata
 # ------------------------------------------------------------------------------
-__VER_MAJOR = 0
-__VER_MINOR = 1
+__VER_MAJOR = 1
+__VER_MINOR = 0
 __VER_PATCH = 0
 VERS = f"{__VER_MAJOR}.{__VER_MINOR}.{__VER_PATCH}"
