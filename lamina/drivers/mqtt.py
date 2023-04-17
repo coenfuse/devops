@@ -135,8 +135,6 @@ class MQTTClient:
             clean_session: bool,
             logger = None
         ):
-        self.__NAME  = "DRIVER - MQTT"
-
         if typing.is_str(client_id, "client_id", "and must be a non-zero length string"):
             self.__id = client_id
 
@@ -318,7 +316,7 @@ class MQTTClient:
         else:
             self.Logger.warn(msg)
             if self.__can_reconn_on_fail:
-                self.Logger.debug(f"reconnecting ...")
+                self.Logger.debug("reconnecting ...")
 
 
     # this callback function is invoked whenever the MQTTClient successfully
@@ -341,9 +339,3 @@ class MQTTClient:
     # --------------------------------------------------------------------------
     def __cb_on_publish(self, client, userdata, mid):
         self.Logger.trace(f"publish SUCCESS with mid: {mid}")
-
-
-    # docs
-    # --------------------------------------------------------------------------
-    # def __cb_on_receive(self, client, userdata, msg: Message):
-    #     self.Logger.trace(f"received message, topic - {msg.topic}, qos - {msg.qos}, payload - {msg.payload}")

@@ -3,7 +3,11 @@
 
 
 # standard imports
-# ..
+# import copy
+# import json
+# from queue import Queue
+# from threading import Thread
+from time import sleep
 
 # internal imports
 # ..
@@ -29,6 +33,9 @@ class Stream:
     def __init__(self):
         self.__inputs = []
         self.__outputs = []
+
+        # self.__relay_service = Thread(target = self.__relayer, name = "temp_router")
+        self.__is_requested_stop = True
 
 
     # docs
@@ -60,6 +67,9 @@ class Stream:
     # docs
     # --------------------------------------------------------------------------
     def start(self):
+        # self.__is_requested_stop = False
+        # self.__relay_service.start()
+
         for output_plugin in self.__outputs:
             output_plugin.start()
 
@@ -72,6 +82,8 @@ class Stream:
     # docs
     # --------------------------------------------------------------------------
     def stop(self):
+        # self.__is_requested_stop = True
+
         for input_plugin in self.__inputs:
             input_plugin.stop()
 
@@ -85,7 +97,20 @@ class Stream:
     # docs
     # --------------------------------------------------------------------------
     def is_running(self):
-        return all(inplug.is_active() for inplug in self.__inputs) or all(outplug.is_active() for outplug in self.__outputs)
+        return all(inplug.is_active() for inplug in self.__inputs) or all(outplug.is_active() for outplug in self.__outputs) or self.__relay_service.is_alive()
+
+
+    # docs
+    # --------------------------------------------------------------------------
+    def __relayer(self):
+          while not self.__is_requested_stop:
+            try:
+                item: MQItem = self.__mq.pop("inbox", timeout_s = 2)
+                if item is not None:
+                    for output_plug in self.__outputs:
+                        output_plug.send(item)
+            except:
+                pass
 
     
     # docs

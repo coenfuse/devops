@@ -16,7 +16,6 @@ from lamina.core.buffers.membuff import MemQueue, MQItem
 from lamina.drivers.mqtt import MQTTClient as _MQTTDriver_
 from lamina.drivers.mqtt import Message as _MQTTMessage_
 from lamina.utils.error import ERC
-# from lamina.utils import stdlog
 
 # thirdparty imports
 # ..
@@ -34,7 +33,7 @@ from lamina.utils.error import ERC
 # sher runtime to publish them serially. The functionality of the outbox buffer 
 # will be later expanded into publisher rate controlling.
 # ==============================================================================
-class MQTT_Output_Plugin:
+class MQTTOutputPlugin:
 
     # Simple constructor initializing the name of plugin that will be used in
     # logging and creating an empty client variable that will be laterr initialized
@@ -44,7 +43,7 @@ class MQTT_Output_Plugin:
     # out the messages to MQTT broker
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__client: _MQTTDriver_ = None
+        self.__client: _MQTTDriver_ = None                                      # type: ignore (sonarlint)
         self.__logger = None
         
         self.__buffer = MemQueue()
@@ -61,10 +60,10 @@ class MQTT_Output_Plugin:
     # --------------------------------------------------------------------------
     def configure(self, name: str, config: dict) -> ERC:
         self.__config = Configuration(config, name)  # may raise exceptions
-        self.__tag_maps: Dict[str, str] = {}
+        self.__tag_maps: Dict[str, set] = {}
         
         for each_pub in self.__config.get_publish_topics():
-            self.__tag_maps[each_pub["topic"]] = each_pub["tags"]
+            self.__tag_maps[each_pub["topic"]] = set(each_pub["tags"])
 
         if self.__config.is_logging_enabled():
             stdlog.configure(
@@ -110,12 +109,11 @@ class MQTT_Output_Plugin:
     # --------------------------------------------------------------------------
     def stop(self) -> ERC:
 
-        status = ERC.SUCCESS
         self.__is_requested_stop = True
         self.__publisher.join()
         
         if self.__client.disconnect() == 0:
-            self.__client = None
+            self.__client = None                                                # type: ignore (sonarlint)
             return ERC.SUCCESS
         else:
             return ERC.FAILURE
@@ -131,9 +129,23 @@ class MQTT_Output_Plugin:
     # will ensure the publishing of message either instantly, after time_interval,
     # or whenever the connection resumes.
     # --------------------------------------------------------------------------
-    def send(self, message):
-        # TODO : encode the message using appropriate encoder
-        self.__buffer.push("outbox", message)
+    def send(self, data: MQItem):
+        self.__buffer.push("outbox", self._encode(data))
+
+
+    # TODO : use appropriate encoders and data serializers while prepping payload
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def _encode(data: MQItem) -> MQItem:
+        content = data.get_value()
+        
+        if not isinstance(content, _MQTTMessage_):
+            message = _MQTTMessage_()
+            message.payload = str(content)
+            data.set_value(message)
+        
+        return data
+
 
 
     # TODO : Add facility for supporting failed messages, that are saved in 
@@ -156,12 +168,14 @@ class MQTT_Output_Plugin:
         while not self.__is_requested_stop:
             try: 
                 mqitem: MQItem = self.__buffer.peek("outbox", timeout_s = 5)    
-
+                
                 if mqitem is not None:
-                    message = _MQTTMessage_()                                          
-                    message.payload = mqitem.get_value()       
-                    for pub_conf in self.__config.get_publish_topics():     
-                        if (mqitem.get_tag() in pub_conf["tags"]) or (len(pub_conf["tags"]) == 0):            
+                    message: _MQTTMessage_ = mqitem.get_value()       
+                
+                    for pub_conf in self.__config.get_publish_topics():
+                        allowed_tags: set = self.__tag_maps[pub_conf["topic"]]
+                
+                        if (mqitem.get_tag() in allowed_tags) or (len(allowed_tags) == 0):    
                             message.topic  = pub_conf["topic"]
                             message.qos    = pub_conf["qos"]                            
                             message.retain = pub_conf["retain"]             
@@ -180,4 +194,4 @@ class MQTT_Output_Plugin:
 
             # any other exception
             except Exception as e:
-                stdlog.error(e)
+                stdlog.error(str(e))

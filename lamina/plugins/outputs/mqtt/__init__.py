@@ -8,7 +8,7 @@
 # ..
 
 # forward references for dependents
-from lamina.plugins.outputs.mqtt.plugin import MQTT_Output_Plugin
+from lamina.plugins.outputs.mqtt.plugin import MQTTOutputPlugin
 # ..
 
 

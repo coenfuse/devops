@@ -10,7 +10,7 @@ from lamina.plugins.inputs.http import HTTP_Input_Plugin
 # ..
 
 # output plugin imports
-from lamina.plugins.outputs.mqtt import MQTT_Output_Plugin
+from lamina.plugins.outputs.mqtt import MQTTOutputPlugin
 # ..
 
 
@@ -31,6 +31,6 @@ PLUGIN_LUT = {
 
     # output plugins
     # --------------------------------------------------------------------------
-    "mqtt_out" : ( lambda: MQTT_Output_Plugin() )
+    "mqtt_out" : ( lambda: MQTTOutputPlugin() )
     # ..
 }
