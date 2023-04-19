@@ -22,12 +22,12 @@ import requests as http
 # ==============================================================================
 # Loren ipsum color dotor signet
 # ==============================================================================
-class HTTP_Input_Plugin:
+class HTTPInputPlugin:
     
     # docs
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__poller: Thread = None
+        self.__poller: Thread = Thread()
         self.__is_polling: bool = False
         
         # DIRTY PATCH (Turning off 'urllib3' and 'requests' logger)
@@ -79,7 +79,7 @@ class HTTP_Input_Plugin:
 
         # utility vars (use nonlocal to modify these in nested functions)
         config = self.__config
-        poll_fail = 0
+        poll_fail_count = 0
         prev_data = ""
 
         # utility functions
@@ -96,20 +96,24 @@ class HTTP_Input_Plugin:
 
             except Exception as e:
                 stdlog.error(f"error '{e}' while making HTTP request")
-                nonlocal poll_fail
-                poll_fail = poll_fail + 1
+                nonlocal poll_fail_count
+                poll_fail_count = poll_fail_count + 1
                 return None, None
         
         def process_failed_status(res: http.Response):
             stdlog.warn(f"request failed with HTTP code {status} {res.reason}")
-            nonlocal poll_fail
-            poll_fail = poll_fail + 1
+            nonlocal poll_fail_count
+            poll_fail_count = poll_fail_count + 1
 
         def get_content(res: http.Response) -> Union[str, None]:
             nonlocal prev_data
             new_data = decode_content(res)
             if config.allow_duplicates() or prev_data != new_data:
-                if len(new_data) <= config.max_content_size():
+                if  (
+                        config.max_content_length() == 0
+                        or
+                        len(new_data) <= config.max_content_length()
+                    ):
                     prev_data = new_data
                     return new_data
                 else:
@@ -129,7 +133,7 @@ class HTTP_Input_Plugin:
         # variables can be accessed / modified inside nested functions just fine
         def can_poll() -> bool:
             if self.__is_polling:
-                if poll_fail > config.max_poll_attempts():
+                if poll_fail_count > config.max_poll_attempts():
                     stdlog.warn(f"polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
                     self.__is_polling = False
             return self.__is_polling
@@ -143,6 +147,7 @@ class HTTP_Input_Plugin:
                 content = get_content(response)
                 if content is not None:
                     self.__data_handler(MQItem(content, config.tag()))
+                    poll_fail_count = 0
             elif response is not None:
                 process_failed_status(response)
 

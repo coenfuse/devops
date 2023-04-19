@@ -6,7 +6,7 @@
 
 # input plugin imports
 from lamina.plugins.inputs.mqtt import MQTTInputPlugin
-from lamina.plugins.inputs.http import HTTP_Input_Plugin
+from lamina.plugins.inputs.http import HTTPInputPlugin
 # ..
 
 # output plugin imports
@@ -26,7 +26,7 @@ PLUGIN_LUT = {
     # input plugins
     # --------------------------------------------------------------------------
     "mqtt_in" : ( lambda: MQTTInputPlugin() ),
-    "http_in" : ( lambda: HTTP_Input_Plugin() ),
+    "http_in" : ( lambda: HTTPInputPlugin() ),
     # ..
 
     # output plugins

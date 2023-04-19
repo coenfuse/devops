@@ -8,7 +8,7 @@
 # ..
 
 # forward references for dependents
-from lamina.plugins.inputs.http.plugin import HTTP_Input_Plugin
+from lamina.plugins.inputs.http.plugin import HTTPInputPlugin
 # ..
 
 
