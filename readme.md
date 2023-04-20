@@ -1,6 +1,6 @@
 # Lamina
 
-- Lamina is modular, plugin-based data collection agent.
+- A modular, fully customizable, plugin-based data collection agent.
 - Provides functionality for realtime data collection from remote or local sources.
 - Can configure collection stream to route collected data to databases or any other consumer.
 - Does not assume streaming endpoints and features simple configurable IO plugins.
