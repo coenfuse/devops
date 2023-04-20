@@ -18,7 +18,17 @@
     # req.headers = { "key" = "value", "key" = "value", ...}
     req.headers = { "accept" = "application/json"}
 
-    # TODO : check the opened tab in mozilla
+    # Provide request parameters as a dictionary of strings, As an example, if 
+    # you wanted to pass key1=value1 and key2=value2 to httpbin.org/get, you'd
+    # write, 
+    # req.params = {'key1'='value1', 'key2'='value2'}
+    # and this will be properly encoded into a URL as,
+    # https://httpbin.org/get?key2=value2&key1=value1
+    # 
+    # You can also pass a list of items as a value:
+    # req.params = {'key1' = 'value1', 'key2' = ['value2', 'value3']}
+    # and this will be encoded into a URL as,
+    # https://httpbin.org/get?key1=value1&key2=value2&key2=value3
     req.params = {}
 
     # Mention the request data that you may want to submit to the server. For

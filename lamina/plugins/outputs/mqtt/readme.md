@@ -11,9 +11,15 @@ This MQTT Output plugin is a component of the LAMINA data collection application
 To use the MQTT Output plugin in Lamina, follow these steps:
 1. Open the root lamina.toml configuration file for your Lamina instance.
 2. In the outputs section, add a new output plugin with a unique name using the following naming convention: ```outputs.mqtt.<name>```. For example, ```outputs.mqtt.hakuna```
-3. Fill the output plugin with required plugin parameters as mentioned in this sample [config.toml](config.toml).
-4. Save the lamina.toml configuration file and restart your Lamina instance.
-5. The MQTT output plugin should now be able connect to the MQTT broker and will begin publishing configured messages based on the configured publish topics.
+3. Fill the output plugin with required plugin parameters as mentioned in this sample [config.toml](docs/config.toml).
+4. Go the 'stream' config block at the end of lamina.toml and make sure to add the name of this newly created input plugin. For example,
+```
+    [stream]
+        input = [mqtt.hakuna, ...]
+        output = [...]
+```
+5. Save the lamina.toml configuration file and restart your Lamina instance.
+6. The MQTT output plugin should now be able connect to the MQTT broker and will begin publishing configured messages based on the configured publish topics.
 
 
 ## Configuration
@@ -89,12 +95,10 @@ The following is the full configuration of this plugin in TOML format with compl
         tags = []
 ```
 
-# Change Log
+## Release Notes
 - v1.0 (17th April 2023)
     - Base version of MQTT publisher.
     - Can publish to multiple topics and support inter-topic routing with tags.
     - The client can reconnect on losing connection from the broker.
     - Dedicated and customizable logging handler.
-    - Does not support TLS certificates or username authentication before connection.
-    - Does not support publish rate controlling or buffering.
     - Based on [paho-mqtt](https://pypi.org/project/paho-mqtt/) package for python.

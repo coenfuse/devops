@@ -84,7 +84,7 @@
 
     
     [inputs.http.pumba]
-        host.url = "https://httpbin.org/uuid"
+        host.url = "http://0.0.0.0:11204/status"
 
         # OPTIONAL request parameters
         req.method = "GET"
@@ -97,11 +97,11 @@
         res.success = [200]
         res.content.allow_duplicates = false
         res.content.decoding = "utf-8"          # auto, raw, custom
-        res.content.tag = "rha"
-        res.content.max_size_bytes = 10000
+        res.content.tag = "pxs"
+        res.content.max_length = 10000
 
         poll.rate_s = 5
-        poll.variance_s = 2
+        poll.variance_s = 4
         poll.max_attempt = 10
 
         log.level = 0
@@ -137,7 +137,7 @@
             topic = "lamina/send/b"
             qos = 0
             retain = false
-            tags = ["rma", "rha"]
+            tags = ["pxs"]
 
         [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/all"

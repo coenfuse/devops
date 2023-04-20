@@ -3,7 +3,7 @@
 - Release Date - 16 April 2023
 - Author - [github.com/coenfuse](www.github.com/coenfuse)
 
-This MQTT Input plugin is a component of the LAMINA data collection application that allows you to collect data from a local or remote MQTT broker. With this plugin, you can subscribe totopics on the broker and receive messages. Each message that is received from a topic is then specified a configured string tag. This tagging is particularly useful in routing data between different components of your data collection pipeline. Additionally, you can configure the plugin to automatically reconnect to the broker if the connection is lost.
+This MQTT Input plugin is a component of the LAMINA data collection application that allows you to collect data from a local or remote MQTT broker. With this plugin, you can subscribe to topics on the broker and receive messages. Each message that is received from a topic is then specified a configured string tag. This tagging is particularly useful in routing data between different components of your data collection pipeline. Additionally, you can configure the plugin to automatically reconnect to the broker if the connection is lost.
 
 
 ## How to use?
@@ -11,8 +11,14 @@ This MQTT Input plugin is a component of the LAMINA data collection application 
 To use the MQTT input plugin in Lamina, follow these steps:
 1. Open the root lamina.toml configuration file for your Lamina instance.
 2. In the inputs section, add a new input plugin with a unique name using the following naming convention: ```inputs.mqtt.<name>```. For example, ```inputs.mqtt.banana```
-3. Fill the input plugin with required plugin parameters as mentioned in this sample [config.toml](config.toml).
-4. Save the lamina.toml configuration file and restart your Lamina instance.
+3. Fill the input plugin with required plugin parameters as mentioned in this sample [config.toml](docs/config.toml).
+4. Go the 'stream' config block at the end of lamina.toml and make sure to add the name of this newly created input plugin. For example,
+```
+    [stream]
+        input = [mqtt.banana, ...]
+        output = [...]
+```
+5. Save the lamina.toml configuration file and restart your Lamina instance.
 5. The MQTT input plugin should now be able connect to the MQTT broker and begin receiving messages based on the configured subscriptions. Messages will be forwarded to any outputs that are configured to receive messages from the plugins.
 
 
@@ -84,12 +90,10 @@ The following is the full configuration of this plugin in TOML format with compl
         tag = "mqtc"
 ```
 
-# Release Notes
+## Release Notes
 - v1.0 (16th April 2023)
     - Base version of MQTT collector.
     - Can subscribe to multiple topics and have separate tags for each topics.
     - The client can reconnect on losing connection from the broker.
     - Dedicated and customizable logging handler.
-    - Does not support TLS certificates or username authentication before connection.
-    - Does not support input buffering from a subscription or inflow rate control.
     - Based on [paho-mqtt](https://pypi.org/project/paho-mqtt/) package for python.
