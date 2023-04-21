@@ -4,6 +4,7 @@ from typing import Dict
 
 # package imports
 from lamina.utils.error import ERC
+from lamina.utils import typing
 
 # thirdparty imports
 # ..
@@ -30,16 +31,15 @@ class Configurator:
 
     @staticmethod
     def parse(config_path) -> ERC:
-        try:
-            print(f"{Configurator.NAME} reading config at - {config_path}")
-            Configurator.DATA = tomllib.load(open(config_path, mode = "rb"))
-            
-            # TODO self.__inspect()
-            return ERC.SUCCESS
-      
+        print(f"{Configurator.NAME} reading config at - {config_path}")
+        
+        try: Configurator.DATA = tomllib.load(open(config_path, mode = "rb"))
         except Exception as e:
             print(f"{Configurator.NAME} exception - {e}")
             return ERC.EXCEPTION
+        
+        Configurator.__inspect()        # may raise errors
+        return ERC.SUCCESS
 
 
     @staticmethod
@@ -94,3 +94,60 @@ class Configurator:
         except Exception as e:
             print(f"{Configurator.NAME} exception - {e}")
             return ERC.EXCEPTION
+        
+
+    # NSFW content below, proceed at your own risk!
+    @staticmethod
+    def __inspect() -> None:
+        
+        # inspect, verify and handle application level configs
+        suspect: dict = Configurator.get_app_config()
+        if "instance" in suspect:
+            typing.is_str(suspect["instance"], "lamina.instance")
+        else:
+            Configurator.DATA["lamina"]["instance"] = ""
+
+        if "log" in suspect:
+            if "stdout" in suspect["log"]:
+                if "level" not in suspect["log"]["stdout"]:
+                    raise KeyError("Missing 'level' config key in 'lamina.log.stdout'")
+                elif typing.is_int(suspect["log"]["stdout"]["level"], "lamina.log.stdout.level"):
+                    if suspect["log"]["stdout"]["level"] not in range(0, 5):
+                        raise ValueError(f"Invalid lamina.log.stdout.level = {suspect['log']['stdout']['level']} specified. Must be within 0 to 5.")
+            
+            if "fileout" in suspect["log"]:
+                if "level" not in suspect["log"]["fileout"]:
+                    raise KeyError("Missing 'level' config key in 'lamina.log.fileout'")
+                elif typing.is_int(suspect["log"]["fileout"]["level"], "lamina.log.fileout.level"):
+                    if suspect["log"]["fileout"]["level"] not in range(0, 5):
+                        raise ValueError(f"Invalid lamina.log.fileout.level = {suspect['log']['fileout']['level']} specified. Must be within 0 to 5.")               
+                
+                if "path" not in suspect["log"]["fileout"]:
+                    raise KeyError("Missing 'path' config key in 'lamina.log.fileout'")
+                else:
+                    typing.is_str(suspect["log"]["fileout"]["path"], "lamina.log.fileout.path")
+
+        # inspect and verify input plugins listings
+        # suspect: dict = Configurator.get_inputs_config()
+
+        # inspect and verify output plugins listings
+        # suspect: dict = Configurator.get_outputs_config()
+
+        # inspect and verify stream configuration
+        # TODO : check the validity of plugin references
+        suspect: dict = Configurator.get_stream_config()
+        if typing.is_list(suspect["inputs"], "stream.inputs"):
+            if len(suspect['inputs']) == 0:
+                raise ValueError("stream.inputs can't be empty. Must have atleast one input plugin mentioned.")
+            for inplug in suspect["inputs"]:
+                if typing.is_str(inplug, "stream.inputs"):
+                    if list(suspect["inputs"]).count(inplug) > 1:
+                        raise ValueError(f"Duplicate input plugin mentioned for '{inplug}'")
+
+        if typing.is_list(suspect["outputs"], "stream.outputs"):
+            if len(suspect['outputs']) == 0:
+                raise ValueError("stream.outputs can't be empty. Must have atleast one output plugin mentioned.")
+            for outplug in suspect["outputs"]:
+                if typing.is_str(outplug, "stream.outputs"):
+                    if list(suspect["outputs"]).count(outplug) > 1:
+                        raise ValueError(f"Duplicate output plugin mentioned for '{outplug}'")

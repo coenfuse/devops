@@ -95,9 +95,13 @@ class Lamina:
     # --------------------------------------------------------------------------
     def __setup_logging(self) -> ERC:
         status = ERC.SUCCESS
+        config = CONFIG.get_app_config().get("log")
+
+        # check if we even want to setup logging. Return immediately if not.
+        if config is None:
+            return status
 
         # setup basics and fetch config
-        config = CONFIG.get_app_config().get("log")
         log_fmt = logging.Formatter(
             datefmt = "%Y-%m-%d %H:%M:%S",
             fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : LAMINA : %(message)s")
