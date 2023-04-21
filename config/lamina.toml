@@ -4,7 +4,7 @@
 # Application level config
 [lamina]
 
-    # [OPTIONAL] Name of the Lamina instance
+    # Name of the Lamina instance
     # - This is helpful when you want to monitor several concurrent running 
     # instances of Lamina from terminal
     # - Or if you are experimenting with different configuration files, this can
