@@ -1,12 +1,10 @@
 # Lamina
 
-- A modular, fully customizable, plugin-based data collection agent.
-- Provides functionality for realtime data collection from remote or local sources.
-- Can configure collection stream to route collected data to databases or any other consumer.
-- Does not assume streaming endpoints and features simple configurable IO plugins.
-- Focusing to be sandbox agent that can be configured for any fullfil any collection requirements.
-- Primarily useful for collecting real-time metrics from remote devices and dumping into database.
-- Written purely in Python 3.11 and is available on both Windows and Linux systems.
+- Lamina is a modular, customizable, plugin-based data collection agent.
+- Collects real-time data and routes it to any type of consumer or database.
+- Provides simple customizable I/O plugins and can be configured to meet any collection requirements.
+- Perfect for collecting real-time metrics from remote devices at scale and writing into databases.
+- Written in Python 3.11 and available on Windows and Linux.
 
 ## How to use
 
@@ -22,12 +20,12 @@
 - [Input Plugins](docs/plugins/input.md)
 - [Output Plugins](docs/plugins/output.md)
 - [Build Lamina](docs/project/build.md)
-- [Setup development](docs/project/setup.md)
-- [Understand codebase](docs/project/study.md)
+- [Codebase tour](docs/project/study.md)
 - [Test Lamina](docs/project/test.md)
 
 ## Contribute
 
+- [Setup development](docs/project/setup.md)
 - [Code review](docs/contribute/code_review.md)
 - [Pull Requests](docs/contribute/issue_pr.md)
 - [Report bugs](docs/contribute/report_bug.md)
@@ -42,4 +40,4 @@
 
 ## Contact
 
-- [@coenfuse](www.twitter.com/coenfuse)
+- [Slide in my discussions!](https://github.com/coenfuse/lamina/discussions/)
