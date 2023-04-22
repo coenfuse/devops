@@ -134,7 +134,7 @@ class Configurator:
         # suspect: dict = Configurator.get_outputs_config()
 
         # inspect and verify stream configuration
-        # TODO : check the validity of plugin references
+        # TODO : check the validity of plugin references, like the actual strings (maybe use regex)
         suspect: dict = Configurator.get_stream_config()
         if typing.is_list(suspect["inputs"], "stream.inputs"):
             if len(suspect['inputs']) == 0:

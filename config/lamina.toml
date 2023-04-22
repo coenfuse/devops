@@ -9,7 +9,7 @@
     # instances of Lamina from terminal
     # - Or if you are experimenting with different configuration files, this can
     # help the user differ in what config is currently active
-    instance = "CS31"
+    instance = "OS21"
     
     # [OPTIONAL] Logging configuration for Lamina. 
     # Lamina can write its runtime to two seperate streams simultaneously. 
