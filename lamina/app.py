@@ -35,6 +35,9 @@ class Lamina:
         self.__config_file = None
         self.__stream = Stream()
 
+        if sys.platform not in ["linux", "win32"]:
+            raise SystemError(f"Cannot start Lamina on platform {sys.platform}. Must be of type 'linux' or 'win32'.")
+
         if sys.platform == "linux":
             self.__stop_event = threading.Condition()
         
