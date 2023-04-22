@@ -29,7 +29,7 @@
     # 4 - ERROR
     # 5 - CRITICAL  [MOST CONCISE]
     log.stdout.level = 1
-    log.fileout.level = 0
+    log.fileout.level = 4
     log.fileout.path = 'out/log'
 
 
@@ -156,5 +156,5 @@
 # the specified output. However, one can control this data flow with careful
 # usage of tags that are specified as config parameters in the plugins.
 [stream]
-    inputs = ["mqtt.local", "mqtt.hiveb", "http.pumba"]
+    inputs = ["mqtt.local", "mqtt.hiveb"] #, "http.pumba"]
     outputs = ["mqtt.kimon"]

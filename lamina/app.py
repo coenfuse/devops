@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 import threading
+import time
 
 # internal imports
 import lamina.metadata as meta
@@ -32,8 +33,13 @@ class Lamina:
 
     def __init__(self):
         self.__config_file = None
-        self.__stop_event = threading.Condition()
         self.__stream = Stream()
+
+        if sys.platform == "linux":
+            self.__stop_event = threading.Condition()
+        
+        if sys.platform == "win32":
+            self.__is_requested_stop = True
 
 
     def start(self) -> ERC:
@@ -55,8 +61,7 @@ class Lamina:
         if status == ERC.SUCCESS:
             stdlog.info("running")
             
-            with self.__stop_event:
-                self.__stop_event.wait()
+            self.__wait_for_interrupt()
 
             stdlog.info("stopping")
             status = self.__stream.stop()
@@ -66,8 +71,12 @@ class Lamina:
 
 
     def stop(self) -> None:
-        with self.__stop_event:
-            self.__stop_event.notify()
+        if sys.platform == "linux":
+            with self.__stop_event:
+                self.__stop_event.notify()
+
+        if sys.platform == "win32":
+            self.__is_requested_stop = True
 
 
     def __process_commandline_input(self) -> ERC:
@@ -153,3 +162,16 @@ class Lamina:
 
         # else, no logging is done
         return status
+    
+
+    # docs
+    # --------------------------------------------------------------------------
+    def __wait_for_interrupt(self):
+        if sys.platform == "linux":
+            with self.__stop_event:
+                self.__stop_event.wait()
+
+        if sys.platform == "win32":
+            self.__is_requested_stop = False
+            while not self.__is_requested_stop:
+                time.sleep(500 / 1000)
