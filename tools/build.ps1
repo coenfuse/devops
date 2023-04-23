@@ -1,114 +1,80 @@
-# Utility functions
+# define constants
+$ROOT = ${pwd}
+
+# $W_image = ""
+# $W_container = ""
+# $W_dockerfile = ""
+$W_outpath = "$ROOT/out/release/win/"
+
+$L_image = "lamina_lin"
+$L_container = "lamina_lin_ct"
+$L_dockerfile = "$ROOT/tools/images/Dockerfile.lin"
+$L_outpath = "$ROOT/out/release/lin/"
+
+
+# define utility functions
 # ------------------------------------------------------------------------------
 function clear_or_create_directory($directory) {
     if (Test-Path $directory -PathType Container) {
-        Write-Host "Directory $directory exists. Clearing contents..."
+        # Write-Host "Directory $directory exists. Clearing contents..."
         Remove-Item $directory\* -Force -Recurse
     }
     else {
-        Write-Host "Directory $directory does not exist. Creating directory..."
+        # Write-Host "Directory $directory does not exist. Creating directory..."
         New-Item -ItemType Directory -Path $directory | Out-Null
     }
 }
 
-$global:VERSION = ""
-function get_project_version() {
-    $global:VERSION = & python lamina/metadata.py
+
+# Build binaries for Linux
+function build_linux(){
+    Write-Host ""
+    Write-Host "Starting building Lamina for Linux"
+    docker build --tag $L_image --file $L_dockerfile .
+    docker run --name $L_container $L_image
+    
+    Write-Host "Copying contents"
+    clear_or_create_directory $L_outpath
+    docker cp ${L_container}:"lamina/release/." $L_outpath
+
+    Write-Host "Removing temporary files"
+    docker stop $L_container
+    docker rm $L_container
+    docker rmi $L_image
+
+    Write-Host "Finished building Lamina for Linux"
 }
 
-# Build functions
-# ------------------------------------------------------------------------------
-function build_debug_pkg() {
-    clear_or_create_directory "out/build"
+# Build binaries for Windows
+function build_windows(){
+    Write-Host ""
+    Write-Host "Starting building Lamina for Windows"
+    clear_or_create_directory $W_outpath
+    Write-Host "Finished building Lamina for Windows"
 }
 
-function build_release_pkg() {
-    get_project_version
-    $RELEASE_ROOT = "out/release/lamina_$global:VERSION"
+# ==============================================================================
+# MAIN DRIVER
+# ==============================================================================
+Write-Host "What platform do want to build for?"
+Write-Host "Press W for Windows"
+Write-Host "Press L for Linux"
+Write-Host "Press B for Both"
+$platform = Read-Host
+$platform = $platform.ToUpper()
 
-    clear_or_create_directory "out/build"
-    clear_or_create_directory $RELEASE_ROOT
-    New-Item -ItemType Directory -Path "$RELEASE_ROOT/app" | Out-Null
-    New-Item -ItemType Directory -Path "$RELEASE_ROOT/config" | Out-Null
-
-    $config_raw = Get-Content extra/artifacts/lamina.toml -Raw
-    $config_raw = $config_raw.Replace("<<VERSION>>", $global:VERSION)
-    Set-Content -Path "$RELEASE_ROOT/config/lamina.toml" -Value $config_raw
-
-    # New-Item -ItemType Directory -Path "$RELEASE_ROOT/data" | Out-Null
-    # New-Item -ItemType Directory -Path "$RELEASE_ROOT/docs" | Out-Null
-    # New-Item -ItemType Directory -Path "$RELEASE_ROOT/extra" | Out-Null
-    Copy-Item -Path extra/artifacts/launch.bat -Destination $RELEASE_ROOT
-    # New-Item -ItemType File -Path "$RELEASE_ROOT/readme.md" | Out-Null
-
-    Write-Host "Creating build environment ..."
-    python -m venv buildenv
-
-    # (IMPORTANT)
-    Write-Host "Activating build environment ..."
-    ./buildenv/Scripts/activate
-
-    Write-Host "Installing dependencies in build environment"
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-
-    Write-Host "Building Lamina v$VERSION"
-    pyinstaller `
-        --specpath "out/build" `
-        --workpath "out/build" `
-        --distpath "$RELEASE_ROOT/app" `
-        --noconfirm `
-        --onedir `
-        --onefile `
-        --console `
-        --name "lamina" `
-        --clean `
-        --log-level ERROR `
-        "lamina/__main__.py"
-
-    Write-Host "Cleaning up"
-    deactivate
-    Remove-Item -Path "./buildenv/" -Recurse -Force
-
-    Write-Host "Lamina v$VERSION build SUCCESS"
-}
-
-# ------------------------------------------------------------------------------
-# DRIVER
-# ------------------------------------------------------------------------------
-$args = $args[0]
-
-$pythonCmd = Get-Command python
-if ($pythonCmd.Version -lt [Version]"3.11") {
-    $version = $pythonCmd.Version
-    Write-Host "Can't build binaries in Python version $version"
-    Write-Host "Install Python 3.11 or higher and then retry"
-    exit
-}
-
-if ($args -eq "release" -or $args -eq "-r") {
-    Write-Host "Building release package"
-    build_release_pkg
-}
-elseif ($args -eq "debug" -or $args -eq "-d") {
-    Write-Host "Building debug package"
-    build_debug_pkg
-}
-else {
-    echo ""
-    echo "Lamina builder v1.0"
-    echo "-------------------------------------------------"
-    echo "Use one of the following flag to use this script"
-    echo "-r / release      - create a release build with packaging"
-    echo "-d / debug        - create a debug build"
-    echo "-h / help         - print this help"
-    echo ""
-    echo "usage examples" 
-    echo "<path_to_script> -r"
-    echo "<path_to_script> release"
-    echo "<path_to_script> debug"
-    echo ""
-    echo "NOTE : Call this script from the root of the Lamina repository only!"
-    echo "NOTE : This script requires Python 3.11 or higher"
-    echo ""
+switch($platform) {
+    "B" {
+        build_linux
+        build_windows
+    }
+    "W" { 
+        build_windows 
+    }
+    "L" { 
+        build_linux 
+    }
+    default { 
+        Write-Host "Invalid input. Please type 'W', 'L', or 'B'." 
+    }
 }
