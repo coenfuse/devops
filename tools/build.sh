@@ -1,78 +1,74 @@
+# THIS IS WORK IN OROGRESS. DO NOT USE!
+#!/bin/bash
+
 # Utility functions
 # ------------------------------------------------------------------------------
-F_clear_or_create_directory() {
-  if [ -d "$1" ]
-  then
-    echo "Directory $1 exists. Clearing contents..."
-    rm -rf "${1:?}/"*
-  else
-    echo "Directory $1 does not exist. Creating directory..."
-    mkdir -p "$1"
-  fi
+function clear_or_create_directory {
+    if [ -d "$1" ]; then
+        echo "Directory $1 exists. Clearing contents..."
+        rm -rf "$1/*"
+    else
+        echo "Directory $1 does not exist. Creating directory..."
+        mkdir -p "$1"
+    fi
 }
 
 VERSION=""
-F_get_project_version() {
-    # Read the contents of metadata.py file
-    metadata=$(cat lamina/metadata.py)
-
-    # Extract the values for __VER_MAJOR, __VER_MINOR, __VER_PATCH, and __VER_BUILD
-    MAJOR=$(echo "$metadata" | grep -oP '__MAJOR = \K\d+')
-    MINOR=$(echo "$metadata" | grep -oP '__MINOR = \K\d+')
-    PATCH=$(echo "$metadata" | grep -oP '__PATCH = \K\d+')
-    BUILD=$(echo "$metadata" | grep -oP '__BUILD = \K\d+')
-    
-    IN_BETA=$(echo "$metadata" | grep -oP '__IN_BETA = \K(True|False)')
-    BETA_BUILD=$(echo "$metadata" | grep -oP '__BETA_BUILD = \K\d+')
-
-    # Print the values
-    if [ $IN_BETA == "True" ]
-      then
-      VERSION="$MAJOR.$MINOR"b"-$BETA_BUILD"
-    else
-      VERSION="$MAJOR.$MINOR.$PATCH.$BUILD"
-    fi
+function get_project_version() {
+    VERSION=$(python3 lamina/metadata.py)
 }
 
 # Build functions
 # ------------------------------------------------------------------------------
-F_build_debug_pkg() {
-    F_clear_or_create_directory "out/build"
+function build_debug_pkg() {
+    clear_or_create_directory "out/build"
 }
 
-F_build_release_pkg() {
-    F_get_project_version
+function build_release_pkg() {
+    get_project_version
     RELEASE_ROOT="out/release/lamina_$VERSION"
 
-    F_clear_or_create_directory "out/build"
-    F_clear_or_create_directory $RELEASE_ROOT
-    mkdir "$RELEASE_ROOT/app"
-    mkdir "$RELEASE_ROOT/config"
-    mkdir "$RELEASE_ROOT/data"
-    mkdir "$RELEASE_ROOT/docs"
-    mkdir "$RELEASE_ROOT/extra"
-    mkdir "$RELEASE_ROOT/out"
-    touch "$RELEASE_ROOT/readme.md"
-    touch "$RELEASE_ROOT/launch.sh"
+    clear_or_create_directory "out/build"
+    clear_or_create_directory "$RELEASE_ROOT/app"
+    clear_or_create_directory "$RELEASE_ROOT/config"
 
-    # activating venv before running installer (IMPORTANT)
-    echo "Activating virtual environment..."
-    source ./venv/bin/activate
+    config_raw=$(cat extra/artifacts/lamina.toml)
+    config_raw=${config_raw//"<<VERSION>>"/$VERSION}
+    echo "$config_raw" > "$RELEASE_ROOT/config/lamina.toml"
+
+    # mkdir -p "$RELEASE_ROOT/data"
+    # mkdir -p "$RELEASE_ROOT/docs"
+    # mkdir -p "$RELEASE_ROOT/extra"
+    cp extra/artifacts/launch.bat "$RELEASE_ROOT"
+
+    echo "Creating build environment ..."
+    python3.11 -m venv buildenv
+
+    # (IMPORTANT)
+    echo "Activating build environment ..."
+    source ./buildenv/bin/activate
+
+    echo "Installing dependencies in build environment"
+    pip install --upgrade pip
+    pip install -r requirements.txt
 
     echo "Building Lamina v$VERSION"
     pyinstaller \
-    --specpath "out/build" \
-    --workpath "out/build" \
-    --distpath "$RELEASE_ROOT/app" \
-    --paths "venv/lib/python3.11/site-packages" \
-    --noconfirm \
-    --onedir \
-    --onefile \
-    --console \
-    --name "lamina" \
-    --clean \
-    --log-level ERROR \
-    "lamina/__main__.py"
+        --specpath "out/build" \
+        --workpath "out/build" \
+        --distpath "$RELEASE_ROOT/app" \
+        --noconfirm \
+        --onedir \
+        --onefile \
+        --console \
+        --name "lamina" \
+        --clean \
+        --log-level ERROR \
+        "lamina/__main__.py"
+
+    echo "Cleaning up"
+    deactivate
+    rm -rf "./buildenv/"
 
     echo "Lamina v$VERSION build SUCCESS"
 }
@@ -82,14 +78,19 @@ F_build_release_pkg() {
 # ------------------------------------------------------------------------------
 args=$1
 
-if [ $args == 'release' -o $args == '-r' ]
-then
+python_version=$(python -c 'import sys; print(sys.version_info[:2])')
+if [ $python_version != "(3, 11)" ]; then
+    echo "Can't build binaries in Python version $python_version"
+    echo "Install Python 3.11 or higher and then retry"
+    exit
+fi
+
+if [ "$args" == "release" ] || [ "$args" == "-r" ]; then
     echo "Building release package"
-    F_build_release_pkg
-elif [ $args == 'debug' -o $args == '-d' ]
-then
+    build_release_pkg
+elif [ "$args" == "debug" ] || [ "$args" == "-d" ]; then
     echo "Building debug package"
-    F_build_debug_pkg
+    build_debug_pkg
 else
     echo ""
     echo "Lamina builder v1.0"
@@ -105,6 +106,6 @@ else
     echo "<path_to_script> debug"
     echo ""
     echo "NOTE : Call this script from the root of the Lamina repository only!"
-    echo "NOTE : This script requires Python 3.11 and PyInstaller 5.9.0 or higher"
+    echo "NOTE : This script requires Python 3.11 or higher"
     echo ""
 fi
