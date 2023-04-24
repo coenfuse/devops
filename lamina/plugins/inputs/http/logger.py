@@ -13,39 +13,41 @@ from lamina.utils import stdlog
 
 
 class HTTPLog:
+
+    # NOTE : make sure to use underscores instead of periods as that causes
+    # unnecessary heirarchy in logging that is not required.
+    def __init__(self):
+        self.__logger = None
+        
+    def configure(self, name, level):
+        self.__logger = stdlog.create_logger(
+            name = f"input_http_{name}",
+            tag  = f"INPUT  : [http.{name}]",
+            level = level)
+        
+    def get_logger_name(self) -> str:
+        return self.__logger.name if self.__logger is not None else ""
     
-    __logger = None
+    def trace(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.log(5, message)
 
-    @staticmethod
-    def configure(tag, level):
-        HTTPLog.__logger = stdlog.create_logger("input.http", tag, level)
+    def debug(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.debug(message)
 
-    @staticmethod
-    def trace(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.log(5, message)
+    def info(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.info(message)
 
-    @staticmethod
-    def debug(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.debug(message)
+    def warn(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.warn(message)
 
-    @staticmethod
-    def info(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.info(message)
+    def error(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.error(message)
 
-    @staticmethod
-    def warn(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.warn(message)
-
-    @staticmethod
-    def error(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.error(message)
-
-    @staticmethod
-    def critical(message: str) -> None:
-        if HTTPLog.__logger is not None:
-            HTTPLog.__logger.critical(message)
+    def critical(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.critical(message)
