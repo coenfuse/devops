@@ -14,6 +14,26 @@ $L_outpath = "$ROOT/out/release/lin/"
 
 # define utility functions
 # ------------------------------------------------------------------------------
+function print_help() {
+    Write-Host ""
+    Write-Host "Lamina builder v1.0"
+    Write-Host "----------------------------------------------------------------"
+    Write-Host "Use powershell on Windows to use this script."
+    Write-Host "Make sure to invoke this script from the root of Lamina repo only!"
+    Write-Host "To build for Window, this script requires installation of Python 3.11 or higher."
+    Write-Host "To build for Linux, this script requires installed and active Docker Engine."
+    Write-Host ""
+    Write-Host "Use one of the following flags to use this script"
+    Write-Host "-w / window         - create release package for windows"
+    Write-Host "-l / linux          - create release package for linux"
+    Write-Host "-a / all            - create release package for all supported platforms"
+    Write-Host "-h / help           - print usage help" 
+    Write-Host ""
+    Write-Host "HOW TO USE EXAMPLES"
+    Write-Host "PS <script_path> -w"
+    Write-Host "PS <script_path> linux"
+}
+
 function clear_or_create_directory($directory) {
     if (Test-Path $directory -PathType Container) {
         # Write-Host "Directory $directory exists. Clearing contents..."
@@ -27,6 +47,7 @@ function clear_or_create_directory($directory) {
 
 
 # Build binaries for Linux
+# ------------------------------------------------------------------------------
 function build_linux(){
     Write-Host ""
     Write-Host "Starting building Lamina for Linux"
@@ -37,10 +58,11 @@ function build_linux(){
     clear_or_create_directory $L_outpath
     docker cp ${L_container}:"lamina/release/." $L_outpath
 
+    # storing details in variabl to avoid printing them on console :)
     Write-Host "Removing temporary files"
-    docker stop $L_container
-    docker rm $L_container
-    docker rmi $L_image
+    $VAR = & docker stop $L_container
+    $VAR = & docker rm $L_container
+    $VAR = & docker rmi $L_image
 
     Write-Host "Finished building Lamina for Linux"
 }
@@ -56,25 +78,23 @@ function build_windows(){
 # ==============================================================================
 # MAIN DRIVER
 # ==============================================================================
-Write-Host "What platform do want to build for?"
-Write-Host "Press W for Windows"
-Write-Host "Press L for Linux"
-Write-Host "Press B for Both"
-$platform = Read-Host
-$platform = $platform.ToUpper()
+$args = $args[0].ToLower()
 
-switch($platform) {
-    "B" {
-        build_linux
-        build_windows
-    }
-    "W" { 
-        build_windows 
-    }
-    "L" { 
-        build_linux 
-    }
-    default { 
-        Write-Host "Invalid input. Please type 'W', 'L', or 'B'." 
-    }
+if ($args -eq "window" -or $args -eq "-w") {
+    build_windows
+
+}
+elseif ($args -eq "linux" -or $args -eq "-l") {
+    build_linux
+}
+elseif ($args -eq "all" -or $args -eq "-a") {
+    build_linux
+    build_windows
+}
+elseif ($args -eq "help" -or $args -eq "-h") {
+    print_help
+}
+else {
+    Write-Host "ERROR : No build flags specified!"
+    print_help
 }

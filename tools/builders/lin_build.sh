@@ -11,7 +11,7 @@ function fetch_project_version() {
 # ------------------------------------------------------------------------------
 function build_release_pkg() {
     fetch_project_version
-    echo "Adding files to Lamina_$g_VERSION bundle ..."
+    echo "Adding files to release bundle"
 
     RELEASE_ROOT="release/lamina_$g_VERSION"
     
@@ -27,7 +27,7 @@ function build_release_pkg() {
     # mkdir -p "$RELEASE_ROOT/extra"
     cp extra/artifacts/launch.sh "$RELEASE_ROOT"
 
-    echo "Building Lamina_$g_VERSION binaries for Linux ..."
+    echo "Generating binaries"
     pyinstaller \
         --specpath "out/build/" \
         --workpath "out/build/" \
@@ -40,8 +40,6 @@ function build_release_pkg() {
         --clean \
         --log-level ERROR \
         "lamina/__main__.py"
-
-    echo "Lamina_$g_VERSION binaries build SUCCESS"
 }
 
 # ==============================================================================
