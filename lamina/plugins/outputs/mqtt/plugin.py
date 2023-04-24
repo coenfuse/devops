@@ -9,7 +9,7 @@ from typing import Dict
 
 # internal imports
 from lamina.plugins.outputs.mqtt.config import Configuration
-from lamina.plugins.outputs.mqtt.logger import MQTTLog as stdlog
+from lamina.plugins.outputs.mqtt.logger import MQTTLog
 
 # module imports
 from lamina.core.buffers.membuff import MemQueue, MQItem
@@ -44,7 +44,7 @@ class MQTTOutputPlugin:
     # --------------------------------------------------------------------------
     def __init__(self):
         self.__client: _MQTTDriver_ = None                                      # type: ignore (sonarlint)
-        self.__logger = None
+        self.__logger_name = ""
         
         self.__buffer = MemQueue()
         self.__buffer.add_queue("outbox")
@@ -66,10 +66,13 @@ class MQTTOutputPlugin:
             self.__tag_maps[each_pub["topic"]] = set(each_pub["tags"])
 
         if self.__config.is_logging_enabled():
-            stdlog.configure(
-                tag = f"OUTPUT : [mqtt.{self.__config.get_client_id()}]",
-                level = self.__config.logging_level())
-            self.__logger = stdlog.get_logger_name()
+            self.log = MQTTLog(
+                self.__config.get_client_id(),
+                self.__config.logging_level())
+            
+            # fetch and store the logger name in a local variable since that is
+            # required to be sent to the MQTT driver for using correct logger
+            self.__logger_name = self.log.get_logger_name()
 
         return ERC.SUCCESS
 
@@ -83,7 +86,7 @@ class MQTTOutputPlugin:
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(),
             clean_session = self.__config.get_is_clean_session(),
-            logger = self.__logger)
+            logger = self.__logger_name)
 
         if self.__client is not None:
             status = ERC.SUCCESS        
@@ -101,6 +104,11 @@ class MQTTOutputPlugin:
             self.__is_requested_stop = False
             self.__publisher.start()
 
+        if status == ERC.SUCCESS:
+            self.log.info("start SUCCESS")
+        else:
+            self.log.error("start FAILURE")
+
         return status
 
 
@@ -114,8 +122,10 @@ class MQTTOutputPlugin:
         
         if self.__client.disconnect() == 0:
             self.__client = None                                                # type: ignore (sonarlint)
+            self.log.info("stop SUCCESS")
             return ERC.SUCCESS
         else:
+            self.log.error("stop FAILURE")
             return ERC.FAILURE
 
 
@@ -194,4 +204,4 @@ class MQTTOutputPlugin:
 
             # any other exception
             except Exception as e:
-                stdlog.error(str(e))
+                self.log.error(str(e))

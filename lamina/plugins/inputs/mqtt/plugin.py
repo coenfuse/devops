@@ -71,6 +71,8 @@ class MQTTInputPlugin:
                 self.__config.get_client_id(), 
                 self.__config.logging_level())
             
+            # fetch and store the logger name in a local variable since that is
+            # required to be sent to the MQTT driver for using correct logger
             self.__logger_name = self.log.get_logger_name()
 
         return ERC.SUCCESS
