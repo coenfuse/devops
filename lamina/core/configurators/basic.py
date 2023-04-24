@@ -112,14 +112,14 @@ class Configurator:
                 if "level" not in suspect["log"]["stdout"]:
                     raise KeyError("Missing 'level' config key in 'lamina.log.stdout'")
                 elif typing.is_int(suspect["log"]["stdout"]["level"], "lamina.log.stdout.level"):
-                    if suspect["log"]["stdout"]["level"] not in range(0, 5):
+                    if suspect["log"]["stdout"]["level"] not in [0, 1, 2, 4, 5]:
                         raise ValueError(f"Invalid lamina.log.stdout.level = {suspect['log']['stdout']['level']} specified. Must be within 0 to 5.")
             
             if "fileout" in suspect["log"]:
                 if "level" not in suspect["log"]["fileout"]:
                     raise KeyError("Missing 'level' config key in 'lamina.log.fileout'")
                 elif typing.is_int(suspect["log"]["fileout"]["level"], "lamina.log.fileout.level"):
-                    if suspect["log"]["fileout"]["level"] not in range(0, 5):
+                    if suspect["log"]["fileout"]["level"] not in [0, 1, 2, 4, 5]:
                         raise ValueError(f"Invalid lamina.log.fileout.level = {suspect['log']['fileout']['level']} specified. Must be within 0 to 5.")               
                 
                 if "path" not in suspect["log"]["fileout"]:

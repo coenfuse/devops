@@ -213,7 +213,7 @@ class MQTTClient:
     def disconnect(self, to_apply_force: bool = True) -> int:
         if self.__agent.disconnect(reasoncode = 0) == 0:
             self.__agent.loop_stop(force = to_apply_force)          # blocking
-            return self.ERC.SUCCESS
+            return self.ERC.SUCCESS.value
         return self.ERC.FAILURE.value
 
 

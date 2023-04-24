@@ -15,12 +15,18 @@
     # Lamina can write its runtime to two seperate streams simultaneously. 
     # stdout  - log to terminal or standard output
     # fileout - log to a file
+    #
     # Both logging streams are optional and can be configured for different level
     # of verbosity. This is particularly helpful for admins who want to keep the
     # stdout concise with higher logging level but may want to dump trace logs
     # to a file for later analysis.
+    #
     # Here we setup the root logger for Lamina application, if the root-logger
     # is not set, no child loggers (for input / output plugins) would work either.
+    #
+    # However take note that the root-logger level does not override any plugin's
+    # log level or vice-versa.
+    #
     # The following is the list of valid log levels:
     # 0 - TRACE     [MOST DETAILED]
     # 1 - DEBUG
