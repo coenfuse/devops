@@ -4,12 +4,12 @@ $ROOT = ${pwd}
 # $W_image = ""
 # $W_container = ""
 # $W_dockerfile = ""
-$W_outpath = "$ROOT/out/release/win/"
+$W_outpath = "$ROOT/out/release/windows/"
 
 $L_image = "lamina_lin"
 $L_container = "lamina_lin_ct"
 $L_dockerfile = "$ROOT/tools/images/Dockerfile.lin"
-$L_outpath = "$ROOT/out/release/lin/"
+$L_outpath = "$ROOT/out/release/linux/"
 
 
 # define utility functions
@@ -72,6 +72,8 @@ function build_windows(){
     Write-Host ""
     Write-Host "Starting building Lamina for Windows"
     clear_or_create_directory $W_outpath
+    & "$ROOT/tools/builders/win_build.ps1"
+
     Write-Host "Finished building Lamina for Windows"
 }
 
