@@ -45,6 +45,7 @@ class MQTTOutputPlugin:
     def __init__(self):
         self.__client: _MQTTDriver_ = None                                      # type: ignore (sonarlint)
         self.__logger_name = ""
+        self.log = MQTTLog()
         
         self.__buffer = MemQueue()
         self.__buffer.add_queue("outbox")
@@ -66,7 +67,7 @@ class MQTTOutputPlugin:
             self.__tag_maps[each_pub["topic"]] = set(each_pub["tags"])
 
         if self.__config.is_logging_enabled():
-            self.log = MQTTLog(
+            self.log.configure(
                 self.__config.get_client_id(),
                 self.__config.logging_level())
             

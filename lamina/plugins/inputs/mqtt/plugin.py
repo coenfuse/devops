@@ -38,6 +38,7 @@ class MQTTInputPlugin:
     def __init__(self):
         self.__client: _MQTTDriver_ = None
         self.__logger_name = ""
+        self.log = MQTTLog()
 
 
     # Configure the MQTT Input plugin, parses and sets up the internal config
@@ -67,7 +68,7 @@ class MQTTInputPlugin:
             self.__tag_map[each_sub.topic] = each_sub.tag
 
         if self.__config.is_logging_enabled():
-            self.log = MQTTLog(
+            self.log.configure(
                 self.__config.get_client_id(), 
                 self.__config.logging_level())
             
