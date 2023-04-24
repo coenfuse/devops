@@ -72,7 +72,7 @@ class Configuration:
                     raise KeyError(f"Missing '{cfg_blk}' config sub-group in 'inputs.http.{self.get_client_id()}.res'")
             if "success" not in suspect["res"]:
                 raise KeyError(f"Missing 'success' status codes array in config sub-group in 'inputs.http.{self.get_client_id()}.res'")
-            for attr in ["allow_duplicates", "decoding", "tag", "max_size_bytes"]:
+            for attr in ["allow_duplicates", "decoding", "tag", "max_length"]:
                 if attr not in suspect["res"]["content"]:
                     raise KeyError(f"Missing '{attr}' config key in config sub-group in 'inputs.http.{self.get_client_id()}.req.content'")            
 
@@ -133,7 +133,7 @@ class Configuration:
             typing.is_bool(suspect["res"]["content"]["allow_duplicates"], f"inputs.http.{self.get_client_id()}.res.content.allow_duplicates")
             typing.is_str(suspect["res"]["content"]["decoding"], f"inputs.http.{self.get_client_id()}.res.content.decoding")
             typing.is_str(suspect["res"]["content"]["tag"], f"inputs.http.{self.get_client_id()}.res.content.tag")
-            typing.is_int(suspect["res"]["content"]["max_size_bytes"], f"inputs.http.{self.get_client_id()}.res.content.max_size_bytes", "and must be positive non-zero integer")
+            typing.is_int(suspect["res"]["content"]["max_length"], f"inputs.http.{self.get_client_id()}.res.content.max_length", "and must be a non-negative integer")
 
             if len(suspect["res"]["success"]) == 0:
                 raise ValueError(f"Configuration inputs.http.{self.get_client_id()}.res.success can't be an empty array, it must contain atleast one positive non-zero integer code e.g. [200]")
@@ -145,8 +145,8 @@ class Configuration:
                 else:
                     raise ValueError(f"Invalid input.http.{self.get_client_id()}.res.content.decoding = {suspect['res']['content']['decoding']}, it must be 'auto', 'raw' or any valid python codec as mentioned in docs") 
 
-            if suspect["res"]["content"]["max_size_bytes"] <= 0:
-                raise ValueError(f"Invalid inputs.http.{self.get_client_id()}.res.content.max_size_bytes = {suspect['res']['content']['max_size_bytes']}, it must be a positive non-zero integer")
+            if suspect["res"]["content"]["max_length"] < 0:
+                raise ValueError(f"Invalid inputs.http.{self.get_client_id()}.res.content.max_length = {suspect['res']['content']['max_length']}, it must be a non-negative integer")
 
         # verify poll config keys
         if "poll" in suspect:
@@ -160,6 +160,9 @@ class Configuration:
             if suspect["poll"]["variance_s"] < 0:
                 raise ValueError(f"Invalid input.http.{self.get_client_id()}.poll.variance_s = {suspect['poll']['variance_s']} specified. Must be a positive integer.")
         
+            if suspect["poll"]["variance_s"] >= suspect["poll"]["rate_s"]:
+                raise ValueError(f"Invalid input.http.{self.get_client_id()}.poll.variance_s = {suspect['poll']['variance_s']} specified. Must be smaller than poll.rate_s = {suspect['poll']['rate_s']}")
+
             if suspect["poll"]["max_attempt"] <= 0:
                 raise ValueError(f"Invalid input.http.{self.get_client_id()}.poll.max_attempt = {suspect['poll']['max_attempt']} specified. Must be a positive non-zero integer.")
 
@@ -245,8 +248,8 @@ class Configuration:
 
     # docs
     # --------------------------------------------------------------------------
-    def max_content_size(self) -> int:
-        return self.__config["res"]["content"]["max_size_bytes"]
+    def max_content_length(self) -> int:
+        return self.__config["res"]["content"]["max_length"]
 
 
     # docs

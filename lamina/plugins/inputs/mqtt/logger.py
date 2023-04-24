@@ -12,37 +12,41 @@ from lamina.utils import stdlog
 
 
 class MQTTLog:
+
+    # NOTE : make sure to use underscores instead of periods as that causes 
+    # unnecessary heirarchy in logging that is not required.
+    def __init__(self):
+        self.__logger = None
     
-    __logger = None
+    def configure(self, name, level):
+        self.__logger = stdlog.create_logger(
+            name = f"input_mqtt_{name}",
+            tag = f"INPUT  : [mqtt.{name}]",
+            level = level)
 
-    @staticmethod
-    def configure(tag, level):
-        MQTTLog.__logger = stdlog.create_logger("input.mqtt", tag, level)
+    def get_logger_name(self) -> str:
+        return self.__logger.name if self.__logger is not None else ""
 
-    @staticmethod
-    def get_logger_name() -> str:
-        return "input.mqtt"
+    def trace(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.log(5, message)
 
-    @staticmethod
-    def trace(message: str) -> None:
-        MQTTLog.__logger.log(5, message)
+    def debug(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.debug(message)
 
-    @staticmethod
-    def debug(message: str) -> None:
-        MQTTLog.__logger.debug(message)
+    def info(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.info(message)
 
-    @staticmethod
-    def info(message: str) -> None:
-        MQTTLog.__logger.info(message)
+    def warn(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.warn(message)
 
-    @staticmethod
-    def warn(message: str) -> None:
-        MQTTLog.__logger.warn(message)
+    def error(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.error(message)
 
-    @staticmethod
-    def error(message: str) -> None:
-        MQTTLog.__logger.error(message)
-
-    @staticmethod
-    def critical(message: str) -> None:
-        MQTTLog.__logger.critical(message)
+    def critical(self, message: str) -> None:
+        if self.__logger is not None:
+            self.__logger.critical(message)

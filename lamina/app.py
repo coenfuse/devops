@@ -1,5 +1,5 @@
-# define about this module in 50 words
-# ..
+# This module contains implementation of Lamina class that drives the whole app.
+# Here we also setup the root logger, configuration and CLI for the app.
 
 
 # standard imports
@@ -8,12 +8,13 @@ import logging
 import os
 import sys
 import threading
+import time
 
 # internal imports
 import lamina.metadata as meta
 
 # module imports
-from lamina.core.configurators.basic import Configurator
+from lamina.core.configurators.basic import Configurator as CONFIG
 from lamina.core.streams.stream import Stream
 from lamina.utils import stdlog
 from lamina.utils.error import ERC
@@ -24,59 +25,63 @@ from lamina.utils.error import ERC
 
 
 # ==============================================================================
-# TODO : docs
+# The following is the Lamina class that sets up the whole app. Here we initialize 
+# streams, plugins, and other active component. We also set up the root-logger, 
+# configurator and handle the CLI for this app.
 # ==============================================================================
 class Lamina:
 
-    # TODO : docs
-    # --------------------------------------------------------------------------
     def __init__(self):
         self.__config_file = None
-        self.__config: Configurator = None 
-        self.__stop_event = threading.Condition()
         self.__stream = Stream()
 
-    # TODO : docs
-    # --------------------------------------------------------------------------
+        if sys.platform not in ["linux", "win32"]:
+            raise SystemError(f"Cannot start Lamina on platform {sys.platform}. Must be of type 'linux' or 'win32'.")
+
+        if sys.platform == "linux":
+            self.__stop_event = threading.Condition()
+        
+        if sys.platform == "win32":
+            self.__is_requested_stop = True
+
+
     def start(self) -> ERC:
         status = self.__process_commandline_input()
 
         if status == ERC.SUCCESS:
-            self.__config = Configurator()
-            status = self.__config.parse(self.__config_file)
+            status = CONFIG.parse(self.__config_file)
 
         if status == ERC.SUCCESS:
             status = self.__setup_logging()
 
         if status == ERC.SUCCESS:
-            stdlog.info(f"starting {self.__config.get_app_config()['instance']} v{meta.VERS}")
-            status = self.__stream.configure(self.__config)
+            stdlog.info(f"starting {CONFIG.get_app_config()['instance']} v{meta.VERS}")
+            status = self.__stream.configure(CONFIG)
 
         if status == ERC.SUCCESS:
             status = self.__stream.start()
 
         if status == ERC.SUCCESS:
-            stdlog.info(f"running")
+            stdlog.info("running")
             
-            with self.__stop_event:
-                self.__stop_event.wait()
+            self.__wait_for_interrupt()
 
-            stdlog.info(f"stopping")
+            stdlog.info("stopping")
             status = self.__stream.stop()
 
-        stdlog.info(f"stopped")
+        stdlog.info("stopped")
         return status
 
 
-    # TODO - docs
-    # --------------------------------------------------------------------------
     def stop(self) -> None:
-        with self.__stop_event:
-            self.__stop_event.notify()
+        if sys.platform == "linux":
+            with self.__stop_event:
+                self.__stop_event.notify()
+
+        if sys.platform == "win32":
+            self.__is_requested_stop = True
 
 
-    # docs
-    # --------------------------------------------------------------------------
     def __process_commandline_input(self) -> ERC:
         status = ERC.SUCCESS
         parser = argparse.ArgumentParser()
@@ -102,9 +107,13 @@ class Lamina:
     # --------------------------------------------------------------------------
     def __setup_logging(self) -> ERC:
         status = ERC.SUCCESS
+        config = CONFIG.get_app_config().get("log")
+
+        # check if we even want to setup logging. Return immediately if not.
+        if config is None:
+            return status
 
         # setup basics and fetch config
-        config = self.__config.get_app_config().get("log")
         log_fmt = logging.Formatter(
             datefmt = "%Y-%m-%d %H:%M:%S",
             fmt = "%(asctime)s.%(msecs)03d [%(levelname).1s] : LAMINA : %(message)s")
@@ -156,3 +165,16 @@ class Lamina:
 
         # else, no logging is done
         return status
+    
+
+    # docs
+    # --------------------------------------------------------------------------
+    def __wait_for_interrupt(self):
+        if sys.platform == "linux":
+            with self.__stop_event:
+                self.__stop_event.wait()
+
+        if sys.platform == "win32":
+            self.__is_requested_stop = False
+            while not self.__is_requested_stop:
+                time.sleep(500 / 1000)

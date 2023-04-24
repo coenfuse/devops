@@ -10,7 +10,7 @@ from typing import Dict
 
 # internal imports
 from lamina.plugins.inputs.mqtt.config import Configurator
-from lamina.plugins.inputs.mqtt.logger import MQTTLog as stdlog
+from lamina.plugins.inputs.mqtt.logger import MQTTLog
 
 # module imports
 from lamina.core.buffers.membuff import MQItem
@@ -29,7 +29,7 @@ from lamina.utils.error import ERC
 # messages on different topics. This class does not provide input buffering or
 # message publishing facility.
 # ==============================================================================
-class MQTT_Input_Plugin:
+class MQTTInputPlugin:
 
     # Simple constructor initializing the name of plugin that will be used in
     # logging and creating an empty client variable that will be later initialzed
@@ -37,7 +37,8 @@ class MQTT_Input_Plugin:
     # --------------------------------------------------------------------------
     def __init__(self):
         self.__client: _MQTTDriver_ = None
-        self.__logger = None
+        self.__logger_name = ""
+        self.log = MQTTLog()
 
 
     # Configure the MQTT Input plugin, parses and sets up the internal config
@@ -67,10 +68,13 @@ class MQTT_Input_Plugin:
             self.__tag_map[each_sub.topic] = each_sub.tag
 
         if self.__config.is_logging_enabled():
-            stdlog.configure(
-                tag = f"INPUT  : [mqtt.{self.__config.get_client_id()}]",
-                level = self.__config.logging_level())
-            self.__logger = stdlog.get_logger_name()
+            self.log.configure(
+                self.__config.get_client_id(), 
+                self.__config.logging_level())
+            
+            # fetch and store the logger name in a local variable since that is
+            # required to be sent to the MQTT driver for using correct logger
+            self.__logger_name = self.log.get_logger_name()
 
         return ERC.SUCCESS
 
@@ -84,7 +88,7 @@ class MQTT_Input_Plugin:
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(), 
             clean_session = self.__config.get_is_clean_session(), 
-            logger = self.__logger)
+            logger = self.__logger_name)
         
         if self.__client is not None:
             status = ERC.SUCCESS
@@ -105,6 +109,11 @@ class MQTT_Input_Plugin:
                     status = ERC.WARNING
                     break
 
+        if status == ERC.SUCCESS:
+            self.log.info("start SUCCESS")
+        else:
+            self.log.error("start FAILURE")
+
         return status
 
 
@@ -119,8 +128,10 @@ class MQTT_Input_Plugin:
 
         if self.__client.disconnect() == 0:
             self.__client = None
+            self.log.info("stop SUCCESS")
             return ERC.SUCCESS
         else:
+            self.log.error("stop FAILURE")
             return ERC.FAILURE
     
 

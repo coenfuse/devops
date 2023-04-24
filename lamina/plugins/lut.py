@@ -5,12 +5,12 @@
 # compile-time method is found.
 
 # input plugin imports
-from lamina.plugins.inputs.mqtt import MQTT_Input_Plugin
-from lamina.plugins.inputs.http import HTTP_Input_Plugin
+from lamina.plugins.inputs.mqtt import MQTTInputPlugin
+from lamina.plugins.inputs.http import HTTPInputPlugin
 # ..
 
 # output plugin imports
-from lamina.plugins.outputs.mqtt import MQTT_Output_Plugin
+from lamina.plugins.outputs.mqtt import MQTTOutputPlugin
 # ..
 
 
@@ -25,12 +25,12 @@ PLUGIN_LUT = {
 
     # input plugins
     # --------------------------------------------------------------------------
-    "mqtt_in" : ( lambda: MQTT_Input_Plugin() ),
-    "http_in" : ( lambda: HTTP_Input_Plugin() ),
+    "mqtt_in" : ( lambda: MQTTInputPlugin() ),
+    "http_in" : ( lambda: HTTPInputPlugin() ),
     # ..
 
     # output plugins
     # --------------------------------------------------------------------------
-    "mqtt_out" : ( lambda: MQTT_Output_Plugin() )
+    "mqtt_out" : ( lambda: MQTTOutputPlugin() )
     # ..
 }

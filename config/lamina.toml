@@ -1,15 +1,11 @@
-# documentation
 [lamina]
-    instance = "CS31"
+    instance = "OS21"
     log.stdout.level = 1
-    log.fileout.level = 0
+    log.fileout.level = 4
     log.fileout.path = 'out/log'
 
 
-# documentation
 [inputs]
-
-    # documentation
     [inputs.mqtt.local]
         host.ip = "localhost"
         host.port = 1883
@@ -17,7 +13,7 @@
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 0
-        # log.level = 0
+        log.level = 2
 
         [[inputs.mqtt.local.subs]]
             topic = "lamina/recv/a"
@@ -34,7 +30,7 @@
             qos = 0
             tag = "lmc"
 
-    # documentation
+
     [inputs.mqtt.hiveb]
         host.ip = "broker.hivemq.com"
         host.port = 1883
@@ -42,16 +38,16 @@
         session.timeout_s = 10
         session.reconnect_on_fail = true
         session.reconnect_timeout_s = 2
-        # log.level = 0
+        log.level = 2
 
         [[inputs.mqtt.hiveb.subs]]
             topic = "lamina/recv/a"
             qos = 0
             tag = "rma"
 
-    # documentation
-    [inputs.http.bimbo]
-        host.url = "https://httpbin.org/uuid"
+    
+    [inputs.http.pumba]
+        host.url = "http://0.0.0.0:11204/status"
 
         # OPTIONAL request parameters
         req.method = "GET"
@@ -64,48 +60,45 @@
         res.success = [200]
         res.content.allow_duplicates = false
         res.content.decoding = "utf-8"          # auto, raw, custom
-        res.content.tag = "rha"
-        res.content.max_size_bytes = 10000
+        res.content.tag = "pxs"
+        res.content.max_length = 10000
 
         poll.rate_s = 5
-        poll.variance_s = 2
+        poll.variance_s = 4
         poll.max_attempt = 10
 
-        # log.level = 0
+        log.level = 2
 
-# documentation
+
 [outputs]
-
-    # documentation
-    [outputs.mqtt.bambo]
+    [outputs.mqtt.kimon]
         host.ip = "localhost"
         host.port = 1883
         session.clean = true
         session.timeout_s = 10
         session.reconnect_on_fail = false
         session.reconnect_timeout_s = 10
-        # log.level = 1
+        log.level = 2
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/a"
             qos = 0
             retain = true
             tags = ["lma", "lmb", "lmc"]
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/b"
             qos = 0
             retain = false
-            tags = ["rma", "rha"]
+            tags = ["pxs"]
 
-        [[outputs.mqtt.bambo.pubs]]
+        [[outputs.mqtt.kimon.pubs]]
             topic = "lamina/send/all"
             qos = 0
             retain = false
             tags = []
 
 
-# documentation
 [stream]
-    inputs = ["http.bimbo", "mqtt.local", "mqtt.hiveb"]
-    outputs = ["mqtt.bambo"]
+    inputs = ["mqtt.local", "mqtt.hiveb", "http.pumba"]
+    outputs = ["mqtt.kimon"]

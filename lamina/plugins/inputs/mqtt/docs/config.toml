@@ -1,0 +1,26 @@
+[inputs.mqtt.sample]
+
+    host.ip = "localhost"
+    host.port = 1883
+
+    session.clean = true
+    session.timeout_s = 10
+    session.reconnect_on_fail = false
+    session.reconnect_timeout_s = 0
+    
+    log.level = 0
+
+    [[inputs.mqtt.sample.subs]]
+        topic = "lamina/topic/input/a"
+        qos = 0
+        tag = "mqta"
+
+    [[inputs.mqtt.sample.subs]]
+        topic = "lamina/topic/input/b"
+        qos = 1
+        tag = "mqtb"
+
+    [[inputs.mqtt.sample.subs]]
+        topic = "lamina/topic/input/c"
+        qos = 2
+        tag = "mqtc"

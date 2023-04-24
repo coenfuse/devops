@@ -8,7 +8,7 @@ from typing import Callable, Union
 
 # internal imports
 from lamina.plugins.inputs.http.config import Configuration
-from lamina.plugins.inputs.http.logger import HTTPLog as stdlog
+from lamina.plugins.inputs.http.logger import HTTPLog
 
 # module imports
 from lamina.core.buffers.membuff import MQItem
@@ -22,13 +22,14 @@ import requests as http
 # ==============================================================================
 # Loren ipsum color dotor signet
 # ==============================================================================
-class HTTP_Input_Plugin:
+class HTTPInputPlugin:
     
     # docs
     # --------------------------------------------------------------------------
     def __init__(self):
-        self.__poller: Thread = None
+        self.__poller: Thread = Thread()
         self.__is_polling: bool = False
+        self.log = HTTPLog()
         
         # DIRTY PATCH (Turning off 'urllib3' and 'requests' logger)
         import logging
@@ -47,16 +48,16 @@ class HTTP_Input_Plugin:
             name = f"http.{self.__config.get_client_id()}.poller")
         
         if self.__config.is_logging_enabled():
-            stdlog.configure(
-                tag = f"INPUT  : [http.{self.__config.get_client_id()}]",
-                level = self.__config.logging_level())
+            self.log.configure(
+                self.__config.get_client_id(),
+                self.__config.logging_level())
 
         return ERC.SUCCESS
     
     # docs
     # --------------------------------------------------------------------------
     def start(self) -> ERC:
-        stdlog.info("running")
+        self.log.info("running")
         self.__poller.start()
         return ERC.SUCCESS if self.__poller.is_alive() else ERC.FAILURE
 
@@ -64,7 +65,7 @@ class HTTP_Input_Plugin:
     # --------------------------------------------------------------------------
     def stop(self) -> ERC:
         self.__is_polling = False
-        stdlog.info("stopping")
+        self.log.info("stopping")
         self.__poller.join()
         return ERC.SUCCESS
 
@@ -79,7 +80,7 @@ class HTTP_Input_Plugin:
 
         # utility vars (use nonlocal to modify these in nested functions)
         config = self.__config
-        poll_fail = 0
+        poll_fail_count = 0
         prev_data = ""
 
         # utility functions
@@ -95,25 +96,29 @@ class HTTP_Input_Plugin:
                 return response.status_code, response
 
             except Exception as e:
-                stdlog.error(f"error '{e}' while making HTTP request")
-                nonlocal poll_fail
-                poll_fail = poll_fail + 1
+                self.log.error(f"error '{e}' while making HTTP request")
+                nonlocal poll_fail_count
+                poll_fail_count = poll_fail_count + 1
                 return None, None
         
         def process_failed_status(res: http.Response):
-            stdlog.warn(f"request failed with HTTP code {status} {res.reason}")
-            nonlocal poll_fail
-            poll_fail = poll_fail + 1
+            self.log.warn(f"request failed with HTTP code {status} {res.reason}")
+            nonlocal poll_fail_count
+            poll_fail_count = poll_fail_count + 1
 
         def get_content(res: http.Response) -> Union[str, None]:
             nonlocal prev_data
             new_data = decode_content(res)
             if config.allow_duplicates() or prev_data != new_data:
-                if len(new_data) <= config.max_content_size():
+                if  (
+                        config.max_content_length() == 0
+                        or
+                        len(new_data) <= config.max_content_length()
+                    ):
                     prev_data = new_data
                     return new_data
                 else:
-                    stdlog.warn(f"response dumped! content length = {len(new_data)} exceeds specified limit of {config.max_content_size()}")
+                    self.log.warn(f"response dumped! content length = {len(new_data)} exceeds specified limit of {config.max_content_size()}")
                     return None
 
         def decode_content(res: http.Response) -> str:
@@ -129,8 +134,8 @@ class HTTP_Input_Plugin:
         # variables can be accessed / modified inside nested functions just fine
         def can_poll() -> bool:
             if self.__is_polling:
-                if poll_fail > config.max_poll_attempts():
-                    stdlog.warn(f"polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
+                if poll_fail_count > config.max_poll_attempts():
+                    self.log.warn(f"polling stopped! Fail count exceeded specified threshold of = {config.max_poll_attempts()}")
                     self.__is_polling = False
             return self.__is_polling
 
@@ -143,6 +148,7 @@ class HTTP_Input_Plugin:
                 content = get_content(response)
                 if content is not None:
                     self.__data_handler(MQItem(content, config.tag()))
+                    poll_fail_count = 0
             elif response is not None:
                 process_failed_status(response)
 

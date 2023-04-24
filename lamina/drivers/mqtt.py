@@ -135,8 +135,6 @@ class MQTTClient:
             clean_session: bool,
             logger = None
         ):
-        self.__NAME  = "DRIVER - MQTT"
-
         if typing.is_str(client_id, "client_id", "and must be a non-zero length string"):
             self.__id = client_id
 
@@ -199,7 +197,7 @@ class MQTTClient:
         if reconnect_on_fail:
             self.__agent.reconnect_delay_set(
                 min_delay = reconnect_timeout_s,
-                max_delay = reconnect_on_fail + 60)
+                max_delay = reconnect_timeout_s + 60)
             
             self.__can_reconn_on_fail = reconnect_on_fail
 
@@ -215,7 +213,7 @@ class MQTTClient:
     def disconnect(self, to_apply_force: bool = True) -> int:
         if self.__agent.disconnect(reasoncode = 0) == 0:
             self.__agent.loop_stop(force = to_apply_force)          # blocking
-            return self.ERC.SUCCESS
+            return self.ERC.SUCCESS.value
         return self.ERC.FAILURE.value
 
 
@@ -318,7 +316,7 @@ class MQTTClient:
         else:
             self.Logger.warn(msg)
             if self.__can_reconn_on_fail:
-                self.Logger.debug(f"reconnecting ...")
+                self.Logger.debug("reconnecting ...")
 
 
     # this callback function is invoked whenever the MQTTClient successfully
@@ -341,9 +339,3 @@ class MQTTClient:
     # --------------------------------------------------------------------------
     def __cb_on_publish(self, client, userdata, mid):
         self.Logger.trace(f"publish SUCCESS with mid: {mid}")
-
-
-    # docs
-    # --------------------------------------------------------------------------
-    # def __cb_on_receive(self, client, userdata, msg: Message):
-    #     self.Logger.trace(f"received message, topic - {msg.topic}, qos - {msg.qos}, payload - {msg.payload}")
