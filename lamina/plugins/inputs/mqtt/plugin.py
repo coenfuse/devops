@@ -10,7 +10,7 @@ from typing import Dict
 
 # internal imports
 from lamina.plugins.inputs.mqtt.config import Configurator
-from lamina.plugins.inputs.mqtt.logger import MQTTLog as stdlog
+from lamina.plugins.inputs.mqtt.logger import MQTTLog
 
 # module imports
 from lamina.core.buffers.membuff import MQItem
@@ -37,7 +37,7 @@ class MQTTInputPlugin:
     # --------------------------------------------------------------------------
     def __init__(self):
         self.__client: _MQTTDriver_ = None
-        self.__logger = None
+        self.__logger_name = ""
 
 
     # Configure the MQTT Input plugin, parses and sets up the internal config
@@ -67,10 +67,11 @@ class MQTTInputPlugin:
             self.__tag_map[each_sub.topic] = each_sub.tag
 
         if self.__config.is_logging_enabled():
-            stdlog.configure(
-                tag = f"INPUT  : [mqtt.{self.__config.get_client_id()}]",
-                level = self.__config.logging_level())
-            self.__logger = stdlog.get_logger_name()
+            self.log = MQTTLog(
+                self.__config.get_client_id(), 
+                self.__config.logging_level())
+            
+            self.__logger_name = self.log.get_logger_name()
 
         return ERC.SUCCESS
 
@@ -84,7 +85,7 @@ class MQTTInputPlugin:
         self.__client = _MQTTDriver_(
             client_id = self.__config.get_client_id(), 
             clean_session = self.__config.get_is_clean_session(), 
-            logger = self.__logger)
+            logger = self.__logger_name)
         
         if self.__client is not None:
             status = ERC.SUCCESS
@@ -105,6 +106,11 @@ class MQTTInputPlugin:
                     status = ERC.WARNING
                     break
 
+        if status == ERC.SUCCESS:
+            self.log.info("start SUCCESS")
+        else:
+            self.log.error("start FAILURE")
+
         return status
 
 
@@ -119,8 +125,10 @@ class MQTTInputPlugin:
 
         if self.__client.disconnect() == 0:
             self.__client = None
+            self.log.info("stop SUCCESS")
             return ERC.SUCCESS
         else:
+            self.log.error("stop FAILURE")
             return ERC.FAILURE
     
 
