@@ -11,7 +11,8 @@ set -e
 mkdir dist
 
 # Install dependencies
-pip3 install -r requirements.txt
+pip install --upgrade pip
+pip install -r requirements.txt
 
 # Build Windows binary
 pyinstaller --distpath "/dist" --noconfirm --onedir --onefile --console --name "lamina" --clean "lamina/__main__.py"
