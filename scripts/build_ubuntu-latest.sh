@@ -16,7 +16,7 @@ sudo apt-get install -y python3-pip
 pip3 install -r requirements.txt
 
 # Build Linux binary
-pyinstaller --distpath "/dist" --noconfirm --onedir --onefile --console --name "lamina" --clean "lamina/__main__.py"
+pyinstaller --distpath "dist" --noconfirm --onedir --onefile --console --name "lamina" --clean "lamina/__main__.py"
 
 # Package Linux binary
 cd dist

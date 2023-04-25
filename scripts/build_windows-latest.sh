@@ -15,7 +15,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Build Windows binary
-pyinstaller --distpath "/dist" --noconfirm --onedir --onefile --console --name "lamina" --clean "lamina/__main__.py"
+pyinstaller --distpath "dist" --noconfirm --onedir --onefile --console --name "lamina" --clean "lamina/__main__.py"
 
 # Package Windows binary
 cd dist
