@@ -1,0 +1,53 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11"]
+    
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Build for ${{ matrix.os }}
+        run: ./scripts/build_${{ matrix.os }}.sh
+      
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: "What's new in this release"
+          draft: false
+          prerelease: false
+      
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: myapp-windows
+          path: out/myapp-windows.zip
+      
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: myapp-linux
+          path: out/myapp-linux.tar.gz
