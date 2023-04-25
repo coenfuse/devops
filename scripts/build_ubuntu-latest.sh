@@ -8,7 +8,7 @@
 set -e
 
 # create a temporary build directory
-mkdir dist
+# mkdir dist
 
 # Install dependencies
 sudo apt-get update
